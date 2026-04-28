@@ -1164,6 +1164,24 @@ function Dashboard({ go = () => {}, mini = false, appliedJobs = [], savedJobs = 
     return true;
   });
 
+  const jobDateLabels = {
+    1: "Today · Apr 28",
+    2: "Today · Apr 28",
+    3: "Yesterday · Apr 27",
+    4: "Apr 26",
+  };
+
+  const groupedFilteredJobs = filteredJobs.reduce((groups, job) => {
+    const dateLabel = jobDateLabels[job.id] || "Earlier";
+    const existingGroup = groups.find((group) => group.dateLabel === dateLabel);
+    if (existingGroup) {
+      existingGroup.items.push(job);
+    } else {
+      groups.push({ dateLabel, items: [job] });
+    }
+    return groups;
+  }, []);
+
   // Auto-advance banners — resets on any manual interaction via progressKey
   useEffect(() => {
     const timer = setInterval(() => {
@@ -1331,57 +1349,69 @@ function Dashboard({ go = () => {}, mini = false, appliedJobs = [], savedJobs = 
           <p className="mt-2 text-sm text-slate-500">{dashboardFilter === "saved" ? "Save jobs you're interested in to view them here." : dashboardFilter === "applied" ? "Jobs you apply to will appear here." : "No jobs found."}</p>
         </Card>
       ) : (
-        filteredJobs.map((job) => {
-          const isApplied = appliedJobs.includes(job.id);
-          const isSaved = savedJobs.includes(job.id);
-          return (
-            <Card key={job.id} className="mb-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex gap-3">
-                  <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-blue-100/60 text-sm font-semibold text-blue-700 ${neoIn}`}>{job.company[0]}</div>
-                  <div>
-                    <h3 className="font-semibold text-slate-900">{job.company}</h3>
-                    <p className="text-sm text-slate-700">{job.title}</p>
-                    <p className="mt-1 flex items-center gap-1 text-xs text-slate-500"><MapPin className="h-3 w-3" /> {job.location}</p>
-                  </div>
-                </div>
-                {isApplied ? (
-                  <span className="rounded-full bg-blue-100/80 px-3 py-1 text-xs font-semibold text-blue-600">Applied</span>
-                ) : (
-                  <span className="rounded-full bg-emerald-100/80 px-3 py-1 text-xs font-semibold text-emerald-600">{job.match}% match</span>
-                )}
-              </div>
+        groupedFilteredJobs.map((group) => (
+          <div key={group.dateLabel} className="mb-5">
+            <div className="mb-3 flex items-center gap-3 px-1">
+              <span className="h-px flex-1 bg-white/60" />
+              <span className={`shrink-0 rounded-full border border-white/60 bg-white/35 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 ${neoOut} backdrop-blur-xl`}>
+                {group.dateLabel}
+              </span>
+              <span className="h-px flex-1 bg-white/60" />
+            </div>
 
-              {isApplied ? (
-                <>
-                  <div className={`mt-3 rounded-2xl bg-white/30 p-3 text-sm text-slate-600 ${neoIn}`}>
-                    <p><b className="text-slate-800">Resume:</b> Job-tailored Resume v3</p>
-                    <p><b className="text-slate-800">Applied:</b> Today</p>
-                    <p><b className="text-slate-800">Status:</b> Under Review</p>
+            {group.items.map((job) => {
+              const isApplied = appliedJobs.includes(job.id);
+              const isSaved = savedJobs.includes(job.id);
+              return (
+                <Card key={job.id} className="mb-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex gap-3">
+                      <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-blue-100/60 text-sm font-semibold text-blue-700 ${neoIn}`}>{job.company[0]}</div>
+                      <div>
+                        <h3 className="font-semibold text-slate-900">{job.company}</h3>
+                        <p className="text-sm text-slate-700">{job.title}</p>
+                        <p className="mt-1 flex items-center gap-1 text-xs text-slate-500"><MapPin className="h-3 w-3" /> {job.location}</p>
+                      </div>
+                    </div>
+                    {isApplied ? (
+                      <span className="rounded-full bg-blue-100/80 px-3 py-1 text-xs font-semibold text-blue-600">Applied</span>
+                    ) : (
+                      <span className="rounded-full bg-emerald-100/80 px-3 py-1 text-xs font-semibold text-emerald-600">{job.match}% match</span>
+                    )}
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <StepPill>{job.type}</StepPill>
-                    <StepPill>{job.salary}</StepPill>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <p className="mt-3 text-sm leading-6 text-slate-600">{job.why}</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <StepPill>{job.type}</StepPill>
-                    <StepPill>{job.salary}</StepPill>
-                    <StepPill>Missing: {job.missing[0]}</StepPill>
-                  </div>
-                  <div className="mt-4 grid grid-cols-3 gap-2">
-                    <button onClick={() => go("detail", job)} className="rounded-xl bg-blue-600 py-2 text-xs font-semibold text-white shadow-[6px_6px_14px_rgba(37,99,235,0.25)]">Details</button>
-                    <button onClick={() => onSaveJob(job.id)} className={`rounded-xl py-2 text-xs font-semibold ${isSaved ? `bg-blue-100/60 text-blue-600 ${neoIn}` : `bg-white/30 text-slate-700 ${neoOut}`}`}>{isSaved ? "Saved ✓" : "Save"}</button>
-                    <button onClick={() => go("tailor", job)} className={`rounded-xl bg-white/30 py-2 text-xs font-semibold text-slate-700 ${neoOut}`}>Apply</button>
-                  </div>
-                </>
-              )}
-            </Card>
-          );
-        })
+
+                  {isApplied ? (
+                    <>
+                      <div className={`mt-3 rounded-2xl bg-white/30 p-3 text-sm text-slate-600 ${neoIn}`}>
+                        <p><b className="text-slate-800">Resume:</b> Job-tailored Resume v3</p>
+                        <p><b className="text-slate-800">Applied:</b> Today</p>
+                        <p><b className="text-slate-800">Status:</b> Under Review</p>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <StepPill>{job.type}</StepPill>
+                        <StepPill>{job.salary}</StepPill>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="mt-3 text-sm leading-6 text-slate-600">{job.why}</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <StepPill>{job.type}</StepPill>
+                        <StepPill>{job.salary}</StepPill>
+                        <StepPill>Missing: {job.missing[0]}</StepPill>
+                      </div>
+                      <div className="mt-4 grid grid-cols-3 gap-2">
+                        <button onClick={() => go("detail", job)} className="rounded-xl bg-blue-600 py-2 text-xs font-semibold text-white shadow-[6px_6px_14px_rgba(37,99,235,0.25)]">Details</button>
+                        <button onClick={() => onSaveJob(job.id)} className={`rounded-xl py-2 text-xs font-semibold ${isSaved ? `bg-blue-100/60 text-blue-600 ${neoIn}` : `bg-white/30 text-slate-700 ${neoOut}`}`}>{isSaved ? "Saved ✓" : "Save"}</button>
+                        <button onClick={() => go("tailor", job)} className={`rounded-xl bg-white/30 py-2 text-xs font-semibold text-slate-700 ${neoOut}`}>Apply</button>
+                      </div>
+                    </>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
+        ))
       )}
 
     </Screen>
