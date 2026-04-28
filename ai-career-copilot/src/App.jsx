@@ -97,31 +97,6 @@ const isResumeFile = (file) => {
   return name.endsWith(".pdf") || name.endsWith(".doc") || name.endsWith(".docx");
 };
 
-const isPdfResume = (item) => {
-  const name = item?.name?.toLowerCase?.() || "";
-  return item?.type === "application/pdf" || name.endsWith(".pdf");
-};
-
-const formatFileSize = (bytes = 0) => {
-  if (!Number.isFinite(bytes) || bytes <= 0) return "0 KB";
-  const units = ["B", "KB", "MB", "GB"];
-  const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-  const value = bytes / 1024 ** index;
-  return `${value >= 10 || index === 0 ? Math.round(value) : value.toFixed(1)} ${units[index]}`;
-};
-
-const formatUploadDate = (dateValue) => {
-  if (!dateValue) return "just now";
-  const date = new Date(dateValue);
-  if (Number.isNaN(date.getTime())) return "just now";
-  return date.toLocaleString([], {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
 const neoOut = "shadow-[12px_12px_28px_rgba(59,130,246,0.16),-12px_-12px_28px_rgba(255,255,255,0.78),inset_1px_1px_0_rgba(255,255,255,0.72)]";
 const neoIn = "shadow-[inset_6px_6px_14px_rgba(59,130,246,0.14),inset_-6px_-6px_14px_rgba(255,255,255,0.78)]";
 const ViewModeContext = React.createContext("mobile");
@@ -329,7 +304,7 @@ function Login({ go }) {
   );
 }
 
-function ResumeUpload({ go, fromDashboard = false, resumes = [], uploadQueue = [], onUploadResume = () => {}, onDeleteResume = () => {}, onOpenResume = () => {} }) {
+function ResumeUpload({ go, fromDashboard = false, resumes = [], uploadQueue = [], onUploadResume = () => {}, onDeleteResume = () => {} }) {
   const [uploaded, setUploaded] = useState(resumes.length > 0 || uploadQueue.length > 0);
   const fileInputRef = useRef(null);
 
@@ -417,7 +392,7 @@ function ResumeUpload({ go, fromDashboard = false, resumes = [], uploadQueue = [
             <ResumeUploadCard key={item.id} item={item} uploading />
           ))}
           {resumes.slice(0, 3).map((resume) => (
-            <ResumeUploadCard key={resume.id} item={resume} onOpen={() => onOpenResume(resume, "resumeUpload")} onDelete={() => onDeleteResume(resume.id)} />
+            <ResumeUploadCard key={resume.id} item={resume} onDelete={() => onDeleteResume(resume.id)} />
           ))}
           {resumes.length > 3 && (
             <button onClick={() => go("resumes")} className="w-full rounded-2xl bg-white/30 py-3 text-sm font-semibold text-blue-600 transition hover:bg-white/45">
@@ -456,7 +431,7 @@ function ResumeUpload({ go, fromDashboard = false, resumes = [], uploadQueue = [
   );
 }
 
-function ResumeUploadCard({ item, uploading = false, onOpen, onDelete }) {
+function ResumeUploadCard({ item, uploading = false, onDelete }) {
   const progress = item.progress ?? 100;
   const isError = item.status === "error";
   const isDone = !uploading || item.status === "done" || progress >= 100;
@@ -477,13 +452,14 @@ function ResumeUploadCard({ item, uploading = false, onOpen, onDelete }) {
         </div>
         <span className="rounded-xl bg-white/40 px-2 py-1 text-[10px] font-bold text-slate-500">{fileLabel}</span>
         {!uploading && item.url && (
-          <button
-            type="button"
-            onClick={() => onOpen?.(item)}
+          <a
+            href={item.url}
+            target="_blank"
+            rel="noreferrer"
             className="rounded-xl bg-white/35 px-3 py-2 text-xs font-semibold text-blue-600 transition hover:bg-white/55"
           >
-            Preview
-          </button>
+            Open
+          </a>
         )}
         {onDelete && (
           <button
@@ -540,9 +516,78 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
     "Any certifications, awards, or achievements you'd like to include?",
   ];
 
+  const createResumeFlows = {
+    "help me write it": [
+      "Absolutely. I’ll guide you like a resume coach and turn short answers into professional resume content.",
+      "I’ll build your resume in 4 parts: Profile Summary, Skills, Projects, and Experience. I’ll also keep it ATS-friendly.",
+      "Sample starting summary: Entry-level UX/frontend candidate with experience in React, Figma, AI prototyping, and user-centered product design.",
+      "Now tell me one project you are proud of. Even a short sentence is enough — I’ll rewrite it into strong resume bullet points."
+    ],
+    "i'll type it out": [
+      "Perfect. I’ll give you a simple structure so you can type your information naturally.",
+      "Please send it like this: 1) Education, 2) Skills, 3) Projects, 4) Experience, 5) Target role.",
+      "Don’t worry about perfect wording. I’ll clean it, shorten it, and convert it into resume-ready bullet points.",
+      "Start with your education and one project. I’ll analyze the content as you type."
+    ],
+    "use my linkedin": [
+      "Great choice. I’ll simulate importing your LinkedIn profile for this prototype demo.",
+      "Importing profile… Found education, 4 skills, 2 project experiences, and 1 portfolio link.",
+      "I noticed your LinkedIn describes projects well, but it needs stronger impact language for a resume.",
+      "I can now generate a first resume draft using your LinkedIn data, then optimize it for UX and frontend roles."
+    ]
+  };
+
+  const openChatFlows = {
+    "find me jobs": [
+      "Starting an agentic job search now. I’ll use your resume, preferences, and skill profile to rank opportunities.",
+      "Searching demo sources: LinkedIn, Indeed, company career pages, and internship platforms…",
+      "Filtering out roles that require too much experience, don’t match your location, or don’t fit your preferred work style…",
+      "Search complete: I found 32 jobs. 8 are strong matches, 15 are medium matches, and 9 are low matches.",
+      "Best match: Junior UX Designer at Linear — 94% match. You match because of Figma, product thinking, and prototype experience. Missing skills: design systems and A/B testing."
+    ],
+    "improve my resume": [
+      "I’ll review your resume like an ATS and hiring manager at the same time.",
+      "Current demo score: 78/100. Strong areas: project experience, design tools, and frontend foundation.",
+      "Main improvements: add measurable impact, include missing keywords, and make your project bullets more outcome-focused.",
+      "Example improvement: ‘Built a React prototype’ → ‘Designed and built a responsive AI career prototype with React, improving task flow clarity for student job seekers.’"
+    ],
+    "career advice": [
+      "Based on your profile, I’d recommend targeting hybrid roles between UX, frontend, and AI product work.",
+      "Best early-career titles for you: Junior UX Designer, Product Design Intern, Frontend Engineer Intern, and AI Product Assistant.",
+      "Your strongest angle is not only coding or only design — it’s your ability to turn user problems into an interactive product prototype.",
+      "Next step: polish one portfolio case study and tailor your resume separately for UX roles and frontend roles."
+    ],
+    "salary insights": [
+      "I’ll estimate salary expectations using the role type, location, and experience level from your profile.",
+      "For entry-level UX/frontend roles in this demo market, a realistic range is around $50K–$80K depending on location and company size.",
+      "For internships, focus less on salary and more on learning quality, mentorship, and whether the work can become a portfolio case study.",
+      "I can also filter job results by high salary once your job search starts."
+    ]
+  };
+
+  const preferenceFlows = {
+    "remote only": [
+      "Got it — I’ll prioritize remote roles and remove on-site-only jobs from your match list.",
+      "I’ll still keep strong hybrid roles as backup options, but mark them as lower priority."
+    ],
+    "full-time": [
+      "Great. I’ll focus on full-time entry-level roles and junior positions.",
+      "I’ll avoid short-term contract roles unless they strongly match your profile."
+    ],
+    "entry level": [
+      "Understood. I’ll filter for internships, junior roles, trainee roles, and new graduate positions.",
+      "I’ll reduce the score for jobs asking for more than 2 years of experience."
+    ],
+    "$50k–$80k": [
+      "Saved. I’ll use $50K–$80K as your preferred range when ranking job results.",
+      "If a job has no salary listed, I’ll still include it but mark salary confidence as unknown."
+    ]
+  };
+
   const isChatOpen = chatMode === "chatOpen";
   const questions = chatMode === "createResume" ? createQuestions : prefQuestions;
   const messagesEndRef = useRef(null);
+  const timersRef = useRef([]);
 
   const initialChatState = useMemo(() => {
     if (isChatOpen) {
@@ -565,24 +610,65 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
   const [messages, setMessages] = useState(initialChatState.messages);
   const [inputText, setInputText] = useState("");
   const [step, setStep] = useState(initialChatState.step);
+  const [isTyping, setIsTyping] = useState(false);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages]);
+  }, [messages, isTyping]);
+
+  useEffect(() => {
+    return () => timersRef.current.forEach((timer) => clearTimeout(timer));
+  }, []);
+
+  const normalizePrompt = (text) => text.trim().toLowerCase().replace(/[’']/g, "'");
+
+  const getFlowForPrompt = (text) => {
+    const key = normalizePrompt(text);
+    if (chatMode === "createResume" && createResumeFlows[key]) return createResumeFlows[key];
+    if (isChatOpen && openChatFlows[key]) return openChatFlows[key];
+    if (!isChatOpen && chatMode !== "createResume" && preferenceFlows[key]) return preferenceFlows[key];
+
+    if (isChatOpen && key.includes("job")) return openChatFlows["find me jobs"];
+    if (isChatOpen && key.includes("resume")) return openChatFlows["improve my resume"];
+    if (chatMode === "createResume" && key.includes("linkedin")) return createResumeFlows["use my linkedin"];
+    if (chatMode === "createResume" && key.includes("write")) return createResumeFlows["help me write it"];
+    return null;
+  };
+
+  const addAgentSequence = (userText, aiReplies) => {
+    timersRef.current.forEach((timer) => clearTimeout(timer));
+    timersRef.current = [];
+    setInputText("");
+    setMessages((prev) => [...prev, { from: "user", text: userText }]);
+    setIsTyping(true);
+
+    aiReplies.forEach((reply, index) => {
+      const timer = setTimeout(() => {
+        setMessages((prev) => [...prev, { from: "ai", text: reply }]);
+        if (index === aiReplies.length - 1) setIsTyping(false);
+      }, 650 + index * 850);
+      timersRef.current.push(timer);
+    });
+  };
 
   const handleSend = () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || isTyping) return;
     const userText = inputText.trim();
+    const flow = getFlowForPrompt(userText);
+    if (flow) {
+      addAgentSequence(userText, flow);
+      return;
+    }
+
     const newMessages = [...messages, { from: "user", text: userText }];
     setInputText("");
 
     if (isChatOpen) {
       const replies = [
-        "That's a great question! Let me help you with that.",
-        "I can definitely assist with that. Tell me more!",
-        "Based on your profile, I'd recommend exploring roles in UX and frontend development.",
-        "Would you like me to search for relevant opportunities?",
-        "I've noted that. Is there anything else you'd like to discuss?",
+        "I understand. I’ll treat that as new career context and use it when ranking jobs and improving your resume.",
+        "That helps. I can turn this into resume wording, job search filters, or application preparation.",
+        "Based on that, I’d recommend focusing on roles where your design, frontend, and AI prototype experience are visible.",
+        "Would you like me to search jobs, improve your resume, or prepare a job-specific application next?",
       ];
       newMessages.push({ from: "ai", text: replies[messages.length % replies.length] });
       setMessages(newMessages);
@@ -591,11 +677,11 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
       setMessages(newMessages);
       setStep(step + 1);
     } else if (chatMode === "createResume") {
-      newMessages.push({ from: "ai", text: "Great! I have everything I need. Let me now ask about your preferences. What kind of job are you looking for?" });
+      newMessages.push({ from: "ai", text: "Great — I have enough background to create a first resume draft. I’ll now organize your information into Summary, Skills, Education, Projects, and Experience sections." });
       setMessages(newMessages);
       setStep(step + 1);
     } else {
-      newMessages.push({ from: "ai", text: "Perfect! I've saved your preferences. Let me find the best matches for you. Redirecting to your dashboard..." });
+      newMessages.push({ from: "ai", text: "Perfect. I saved your preferences and will use them to filter job results, rank matches, and avoid roles that do not fit your goals." });
       setMessages(newMessages);
       setTimeout(() => go("dashboard"), 2000);
     }
@@ -608,8 +694,22 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
     : ["Remote only", "Full-time", "Entry level", "$50K–$80K"];
 
   const handleQuickReply = (reply) => {
-    setInputText(reply);
+    if (isTyping) return;
+    const flow = getFlowForPrompt(reply);
+    if (flow) addAgentSequence(reply, flow);
+    else setInputText(reply);
   };
+
+  const renderMessageText = (text) => (
+    <>
+      {String(text).split("\n").map((line, index, arr) => (
+        <React.Fragment key={`${line}-${index}`}>
+          {line}
+          {index < arr.length - 1 && <br />}
+        </React.Fragment>
+      ))}
+    </>
+  );
 
   return (
     <PhoneShell>
@@ -653,9 +753,22 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
                   : "ml-auto max-w-[85%] rounded-2xl rounded-tr-sm bg-blue-600 p-4 text-sm leading-6 text-white shadow-[8px_8px_18px_rgba(37,99,235,0.25)]"
                 }
               >
-                {msg.text}
+                {renderMessageText(msg.text)}
               </motion.div>
             ))}
+
+            {isTyping && (
+              <motion.div
+                initial={{ opacity: 0, y: 12, filter: "blur(4px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                className={`flex w-fit max-w-[75%] items-center gap-2 rounded-2xl rounded-tl-sm border border-white/60 bg-white/45 p-4 text-sm text-slate-700 ${neoOut} backdrop-blur-xl`}
+              >
+                <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500 [animation-delay:120ms]" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500 [animation-delay:240ms]" />
+                <span className="ml-1 text-xs text-slate-500">Syncra is working</span>
+              </motion.div>
+            )}
             <div ref={messagesEndRef} />
           </div>
         </div>
@@ -667,7 +780,8 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
               <button
                 key={q}
                 onClick={() => handleQuickReply(q)}
-                className={`shrink-0 rounded-full border border-white/60 bg-white/45 px-4 py-2 text-xs font-semibold text-slate-700 ${neoOut} transition hover:bg-white/55`}
+                disabled={isTyping}
+                className={`shrink-0 rounded-full border border-white/60 bg-white/45 px-4 py-2 text-xs font-semibold text-slate-700 ${neoOut} transition hover:bg-white/55 disabled:cursor-not-allowed disabled:opacity-60`}
               >
                 {q}
               </button>
@@ -681,24 +795,19 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                placeholder="Type your answer..."
-                className="w-full flex-1 bg-transparent text-slate-700 outline-none placeholder:text-slate-400"
+                placeholder={isTyping ? "Syncra is thinking..." : "Type your answer..."}
+                disabled={isTyping}
+                className="w-full flex-1 bg-transparent text-slate-700 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed"
               />
               <button
                 onClick={handleSend}
-                className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-blue-600 text-white shadow-lg transition hover:bg-blue-700"
+                disabled={isTyping || !inputText.trim()}
+                className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-blue-600 text-white shadow-lg transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Send className="h-4 w-4" />
               </button>
             </div>
           </div>
-
-          {!isChatOpen && (
-            <div className="mt-3 grid grid-cols-2 gap-3">
-              <SecondaryButton onClick={() => go("dashboard")}>Save & Continue</SecondaryButton>
-              <SecondaryButton onClick={() => go("dashboard")}>Skip to Dashboard</SecondaryButton>
-            </div>
-          )}
         </div>
       </div>
     </PhoneShell>
@@ -1086,7 +1195,7 @@ function Tracker({ go }) {
   return <PhoneShell><Screen nav go={go} activeTab="jobs"><Header title="Application Tracker" subtitle="Track every opportunity" icon={<GlassIcon className="h-12 w-12 rounded-2xl"><ClipboardList className="h-6 w-6 text-blue-600" /></GlassIcon>} /><div className="mb-4 flex gap-2 overflow-x-auto pb-2">{statuses.map((s) => <button key={s} className={`shrink-0 rounded-full border border-white/60 bg-white/35 px-4 py-2 text-xs font-semibold text-slate-700 ${neoOut}`}>{s}</button>)}</div><div className="space-y-3">{applications.map((a) => <Card key={a.company}><div className="flex items-start justify-between"><div><h3 className="font-semibold text-slate-900">{a.company}</h3><p className="text-sm text-slate-600">{a.role}</p></div><StepPill>{a.status}</StepPill></div><p className="mt-3 text-xs text-slate-500">Applied {a.date} · {a.resume}</p><div className="mt-4 grid grid-cols-3 gap-2"><button className={`rounded-xl bg-white/30 py-2 text-xs font-semibold ${neoOut}`}>Update</button><button className="rounded-xl bg-blue-600 py-2 text-xs font-semibold text-white shadow-[6px_6px_14px_rgba(37,99,235,0.25)]">Interview</button><button className={`rounded-xl bg-white/30 py-2 text-xs font-semibold ${neoOut}`}>Resume</button></div></Card>)}</div></Screen></PhoneShell>;
 }
 
-function ResumesScreen({ go, resumes = [], uploadQueue = [], onUploadResume = () => {}, onDeleteResume = () => {}, onOpenResume = () => {} }) {
+function ResumesScreen({ go, resumes = [], uploadQueue = [], onUploadResume = () => {}, onDeleteResume = () => {} }) {
   const fileInputRef = useRef(null);
   const handleFiles = (fileList) => {
     const files = Array.from(fileList || []);
@@ -1135,7 +1244,7 @@ function ResumesScreen({ go, resumes = [], uploadQueue = [], onUploadResume = ()
 
         <div className="space-y-3">
           {uploadQueue.map((item) => <ResumeUploadCard key={item.id} item={item} uploading />)}
-          {resumes.map((resume) => <ResumeUploadCard key={resume.id} item={resume} onOpen={() => onOpenResume(resume, "resumes")} onDelete={() => onDeleteResume(resume.id)} />)}
+          {resumes.map((resume) => <ResumeUploadCard key={resume.id} item={resume} onDelete={() => onDeleteResume(resume.id)} />)}
           {uploadQueue.length === 0 && resumes.length === 0 && (
             <Card className="text-center">
               <div className={`mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-blue-100/70 text-blue-600 ${neoIn}`}>
@@ -1151,79 +1260,6 @@ function ResumesScreen({ go, resumes = [], uploadQueue = [], onUploadResume = ()
   );
 }
 
-
-
-function ResumePreviewScreen({ go, resume, backTarget = "resumes", onDeleteResume = () => {} }) {
-  const canPreviewPdf = resume?.url && isPdfResume(resume);
-
-  return (
-    <PhoneShell>
-      <Screen>
-        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-4 flex items-center justify-between bg-transparent px-6 pb-3 pt-12 backdrop-blur-sm">
-          <button onClick={() => go(backTarget)} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/60 text-slate-800 shadow-sm transition hover:bg-white/80">
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <div className="min-w-0 flex-1 px-3 text-center">
-            <h1 className="truncate text-base font-semibold text-slate-900">Resume Preview</h1>
-            <p className="truncate text-xs text-slate-500">{resume?.name || "No resume selected"}</p>
-          </div>
-          {resume?.id ? (
-            <button
-              type="button"
-              onClick={() => {
-                onDeleteResume(resume.id);
-                go(backTarget);
-              }}
-              className="grid h-10 w-10 place-items-center rounded-full bg-white/60 text-slate-500 shadow-sm transition hover:bg-red-50 hover:text-red-500"
-              aria-label="Delete resume"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          ) : (
-            <div className="h-10 w-10" />
-          )}
-        </div>
-
-        {!resume ? (
-          <Card className="text-center">
-            <div className={`mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-blue-100/70 text-blue-600 ${neoIn}`}>
-              <FileText className="h-7 w-7" />
-            </div>
-            <h3 className="font-semibold text-slate-900">No resume selected</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Go back to your resume list and choose a file to preview.</p>
-          </Card>
-        ) : canPreviewPdf ? (
-          <div className={`overflow-hidden rounded-3xl border border-white/60 bg-white/30 ${neoOut} backdrop-blur-xl`}>
-            <div className="flex items-center justify-between border-b border-white/50 px-4 py-3">
-              <div className="min-w-0">
-                <h3 className="truncate text-sm font-semibold text-slate-900">{resume.name}</h3>
-                <p className="text-xs text-slate-500">{formatFileSize(resume.size)} · PDF preview</p>
-              </div>
-              <StepPill>Inside app</StepPill>
-            </div>
-            <div className="h-[500px] bg-white/50 sm:h-[560px]">
-              <iframe
-                title={resume.name}
-                src={`${resume.url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-                className="h-full w-full border-0 bg-white"
-              />
-            </div>
-          </div>
-        ) : (
-          <Card className="text-center">
-            <div className={`mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-blue-100/70 text-blue-600 ${neoIn}`}>
-              <FileText className="h-7 w-7" />
-            </div>
-            <h3 className="font-semibold text-slate-900">Preview not available</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Browser in-app preview works best for PDF files. DOC and DOCX files are saved in your list, but they cannot be rendered inside the phone screen without a document viewer service.
-            </p>
-          </Card>
-        )}
-      </Screen>
-    </PhoneShell>
-  );
-}
 
 function Profile({ go, noNav = false, appliedCount, savedCount, jobsCount, resumesCount = 0 }) {
   const accountRows = [
@@ -1462,8 +1498,6 @@ function ViewSwitchButton({ viewMode, onToggle }) {
 export default function App() {
   const [screen, setScreen] = useState("landing");
   const [selectedJob, setSelectedJob] = useState(jobs[0]);
-  const [selectedResume, setSelectedResume] = useState(null);
-  const [resumePreviewBackTarget, setResumePreviewBackTarget] = useState("resumes");
   const [viewMode, setViewMode] = useState("mobile");
   const [chatMode, setChatMode] = useState("setPreferences");
   const [appliedJobs, setAppliedJobs] = useState([]);
@@ -1540,13 +1574,6 @@ export default function App() {
       if (target?.url) URL.revokeObjectURL(target.url);
       return prev.filter((resume) => resume.id !== resumeId);
     });
-    setSelectedResume((prev) => (prev?.id === resumeId ? null : prev));
-  };
-
-  const handleOpenResume = (resume, backTarget = "resumes") => {
-    setSelectedResume(resume);
-    setResumePreviewBackTarget(backTarget);
-    setScreen("resumePreview");
   };
 
   const handleSaveJob = (jobId) => {
@@ -1569,7 +1596,7 @@ export default function App() {
     switch (screen) {
       case "landing": return <Landing go={go} />;
       case "login": return <Login go={go} />;
-      case "resumeUpload": return <ResumeUpload go={go} fromDashboard={hasReachedDashboard} resumes={resumes} uploadQueue={uploadQueue} onUploadResume={handleUploadResume} onOpenResume={handleOpenResume} onDeleteResume={handleDeleteResume} />;
+      case "resumeUpload": return <ResumeUpload go={go} fromDashboard={hasReachedDashboard} resumes={resumes} uploadQueue={uploadQueue} onUploadResume={handleUploadResume} onDeleteResume={handleDeleteResume} />;
       case "aiChatbot": return <AIChatbot key={chatMode} go={go} chatMode={chatMode} fromDashboard={hasReachedDashboard} />;
       case "setup": return <Setup go={go} />;
       case "resumeInput": return <ResumeInput go={go} />;
@@ -1587,12 +1614,11 @@ export default function App() {
       case "review": return <Review go={go} selectedJob={selectedJob} />;
       case "submitted": return <Submitted go={go} selectedJob={selectedJob} onApply={handleApplyJob} />;
       case "tracker": return <Tracker go={go} />;
-      case "resumes": return <ResumesScreen go={go} resumes={resumes} uploadQueue={uploadQueue} onUploadResume={handleUploadResume} onOpenResume={handleOpenResume} onDeleteResume={handleDeleteResume} />;
-      case "resumePreview": return <ResumePreviewScreen go={go} resume={selectedResume} backTarget={resumePreviewBackTarget} onDeleteResume={handleDeleteResume} />;
+      case "resumes": return <ResumesScreen go={go} resumes={resumes} uploadQueue={uploadQueue} onUploadResume={handleUploadResume} onDeleteResume={handleDeleteResume} />;
       case "profile": return <Profile go={go} noNav appliedCount={appliedJobs.length} savedCount={savedJobs.length} jobsCount={jobs.length} resumesCount={resumes.length} />;
       default: return <Landing go={go} />;
     }
-  }, [screen, selectedJob, selectedResume, resumePreviewBackTarget, chatMode, appliedJobs, savedJobs, hasReachedDashboard, dashboardFilter, resumes, uploadQueue]);
+  }, [screen, selectedJob, chatMode, appliedJobs, savedJobs, hasReachedDashboard, dashboardFilter, resumes, uploadQueue]);
 
   const insideAppTransition = screen !== "landing";
   const tabbedScreens = ["dashboard", "profile", "tracker", "aiChatbot"];
