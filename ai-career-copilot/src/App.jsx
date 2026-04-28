@@ -645,10 +645,10 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false, onS
       "Paste or type your rough resume information now."
     ],
     "use my linkedin": [
-      "Great choice. I’ll simulate importing your LinkedIn profile for this prototype demo.",
-      "Importing profile… Found education, 4 skills, 2 project experiences, and 1 portfolio link.",
-      "I noticed your LinkedIn describes projects well, but it needs stronger impact language for a resume.",
-      "I can now generate a first resume draft using your LinkedIn data, then optimize it for UX and frontend roles."
+      "Great choice. I already have access to your LinkedIn profile for this demo.",
+      "Reading LinkedIn data… Found your education, project experience, skills, portfolio link, and career interests.",
+      "I’m converting your LinkedIn profile into a resume format with ATS-friendly sections and stronger impact wording.",
+      "I have enough information now, so I’m creating your LinkedIn-based resume in the background. You can keep using the app and I’ll notify you when it’s ready."
     ]
   };
 
@@ -796,6 +796,38 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false, onS
     addAgentSequence(userText, createResumeFlows["i'll type it out"]);
   };
 
+  const startLinkedInFlow = (userText) => {
+    setHelpWriteAnswers([]);
+    setHelpWriteStep(null);
+    setTypeItOutActive(false);
+
+    const linkedInResumeAnswers = [
+      {
+        question: "LinkedIn target role",
+        answer: "Junior UX Designer, Frontend Developer, and Product Design Internship roles focused on UI design, user research, frontend prototyping, and AI-powered product experiences.",
+      },
+      {
+        question: "LinkedIn education",
+        answer: "International Business student at Tamkang University in Taiwan, expected graduation 2027, with software project experience in UI/UX planning, React prototyping, and product design.",
+      },
+      {
+        question: "LinkedIn projects and experience",
+        answer: "AI Career Copilot app project: designed user flows, built a responsive React prototype, implemented resume upload, in-app PDF preview, chatbot interactions, job matching demo, and agentic background resume creation workflow.",
+      },
+      {
+        question: "LinkedIn skills and tools",
+        answer: "React, JavaScript, Tailwind CSS, Figma, UI/UX Design, Responsive Web Design, User Journey Mapping, Empathy Maps, Prompt Engineering, Teamwork, Presentation, and AI tool usage.",
+      },
+      {
+        question: "LinkedIn achievements and links",
+        answer: "Created a full interactive prototype, improved the interface with neumorphism and glassmorphism, deployed the app on Vercel for team testing, and connected business thinking with AI-driven product design.",
+      },
+    ];
+
+    onStartBackgroundResume(linkedInResumeAnswers);
+    addAgentSequence(userText, createResumeFlows["use my linkedin"]);
+  };
+
   const handleTypeItOutAnswer = (userText) => {
     setTypeItOutActive(false);
     const typedResumeAnswers = [
@@ -862,6 +894,8 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false, onS
         startHelpWriteFlow(userText);
       } else if (chatMode === "createResume" && normalizePrompt(userText) === "i'll type it out") {
         startTypeItOutFlow(userText);
+      } else if (chatMode === "createResume" && normalizePrompt(userText) === "use my linkedin") {
+        startLinkedInFlow(userText);
       } else {
         addAgentSequence(userText, flow);
       }
@@ -909,6 +943,10 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false, onS
     }
     if (chatMode === "createResume" && normalizePrompt(reply) === "i'll type it out") {
       startTypeItOutFlow(reply);
+      return;
+    }
+    if (chatMode === "createResume" && normalizePrompt(reply) === "use my linkedin") {
+      startLinkedInFlow(reply);
       return;
     }
     const flow = getFlowForPrompt(reply);
