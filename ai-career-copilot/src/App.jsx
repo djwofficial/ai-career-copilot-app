@@ -1,5 +1,5 @@
 import React, { useContext, useMemo, useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   ArrowRight,
   ArrowLeft,
@@ -16,7 +16,6 @@ import {
   Plus,
   Sparkles,
   CheckCircle2,
-  X,
   Bookmark,
   Send,
   Settings,
@@ -30,13 +29,10 @@ import {
   ChevronRight,
   ChevronLeft,
   Star,
-  MessageCircle,
   PenLine,
   Filter,
   Clock,
-  CreditCard,
   Palette,
-  Camera,
   Wifi,
   Battery,
   Signal,
@@ -379,10 +375,6 @@ function ResumeUpload({ go, fromDashboard = false }) {
 }
 
 function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
-  const [messages, setMessages] = useState([]);
-  const [inputText, setInputText] = useState("");
-  const [step, setStep] = useState(0);
-
   const prefQuestions = [
     "What kind of job are you looking for? (e.g. UX Designer, Frontend Developer, Product Manager)",
     "What's your preferred location? (e.g. Remote, San Francisco, New York)",
@@ -401,21 +393,26 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
 
   const isChatOpen = chatMode === "chatOpen";
   const questions = chatMode === "createResume" ? createQuestions : prefQuestions;
-
-  // Initialize first message
-  React.useEffect(() => {
+  const initialChatState = useMemo(() => {
     if (isChatOpen) {
-      setMessages([{ from: "ai", text: "Hi! I'm Syncra AI. How can I help you today? You can ask me about jobs, resumes, career advice, or anything else." }]);
-      setStep(0);
-      return;
+      return {
+        messages: [{ from: "ai", text: "Hi! I'm Syncra AI. How can I help you today? You can ask me about jobs, resumes, career advice, or anything else." }],
+        step: 0,
+      };
     }
+
     const initial = chatMode === "createResume"
       ? { from: "user", text: "I want to create a resume" }
       : { from: "user", text: "I want to set my preferences" };
-    const aiReply = { from: "ai", text: questions[0] };
-    setMessages([initial, aiReply]);
-    setStep(1);
-  }, [chatMode]);
+
+    return {
+      messages: [initial, { from: "ai", text: questions[0] }],
+      step: 1,
+    };
+  }, [chatMode, isChatOpen, questions]);
+  const [messages, setMessages] = useState(initialChatState.messages);
+  const [inputText, setInputText] = useState("");
+  const [step, setStep] = useState(initialChatState.step);
 
   const handleSend = () => {
     if (!inputText.trim()) return;
@@ -616,7 +613,7 @@ function Skill({ go }) {
   );
 }
 
-function Dashboard({ go = () => {}, mini = false, appliedJobs = [], savedJobs = [], onSaveJob = () => {}, onApplyJob = () => {}, noNav = false, dashboardFilter = "all", setDashboardFilter }) {
+function Dashboard({ go = () => {}, mini = false, appliedJobs = [], savedJobs = [], onSaveJob = () => {}, noNav = false, dashboardFilter = "all", setDashboardFilter }) {
   const [bannerIndex, setBannerIndex] = useState(0);
   const [progressKey, setProgressKey] = useState(0);
   const BANNER_DURATION = 3000;
@@ -917,7 +914,7 @@ function Review({ go, selectedJob }) {
 
 function Submitted({ go, selectedJob, onApply = () => {} }) {
   const job = selectedJob || jobs[0];
-  useEffect(() => { onApply(job.id); }, [job.id]);
+  useEffect(() => { onApply(job.id); }, [job.id, onApply]);
   return <PhoneShell><Screen><div className="flex min-h-[610px] flex-col justify-center"><Card className="text-center"><div className={`mx-auto mb-5 grid h-24 w-24 place-items-center rounded-full bg-emerald-100/70 text-emerald-600 ${neoOut}`}><CheckCircle2 className="h-12 w-12" /></div><h1 className="text-xl font-semibold text-slate-900">Application submitted</h1><p className="mt-3 text-sm leading-6 text-slate-600">{job.company} · {job.title}</p><div className={`mt-4 rounded-2xl bg-white/30 p-4 text-left text-sm text-slate-600 ${neoIn}`}><p><b className="text-slate-800">Resume:</b> Job-tailored Resume v3</p><p><b className="text-slate-800">Submitted:</b> Today</p></div><div className="mt-6 space-y-3"><PrimaryButton onClick={() => go("dashboard")}>Back to Home</PrimaryButton><SecondaryButton onClick={() => go("dashboard")}>Browse More Jobs</SecondaryButton></div></Card></div></Screen></PhoneShell>;
 }
 
@@ -1070,10 +1067,28 @@ function Profile({ go, noNav = false, appliedCount, savedCount, jobsCount }) {
 
 
 
-function ViewSwitchButton({ viewMode, onToggle }) {
-  const isWeb = viewMode === "web";
+function ViewSwitchIcon({ active, type }) {
+  const className = `h-[18px] w-[18px] transition-colors duration-300 ${active ? "text-zinc-950" : "text-white/75"}`;
 
-  const MobileIcon = ({ active }) => (
+  if (type === "web") {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+      >
+        <rect x="3" y="5" width="18" height="12" rx="2.2" />
+        <path d="M8 21h8" />
+        <path d="M12 17v4" />
+      </svg>
+    );
+  }
+
+  return (
     <svg
       viewBox="0 0 24 24"
       fill="none"
@@ -1081,28 +1096,16 @@ function ViewSwitchButton({ viewMode, onToggle }) {
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={`h-[18px] w-[18px] transition-colors duration-300 ${active ? "text-zinc-950" : "text-white/75"}`}
+      className={className}
     >
       <rect x="7" y="3" width="10" height="18" rx="2.4" />
       <path d="M10.5 17h3" />
     </svg>
   );
+}
 
-  const WebIcon = ({ active }) => (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={`h-[18px] w-[18px] transition-colors duration-300 ${active ? "text-zinc-950" : "text-white/75"}`}
-    >
-      <rect x="3" y="5" width="18" height="12" rx="2.2" />
-      <path d="M8 21h8" />
-      <path d="M12 17v4" />
-    </svg>
-  );
+function ViewSwitchButton({ viewMode, onToggle }) {
+  const isWeb = viewMode === "web";
 
   return (
     <button
@@ -1129,14 +1132,14 @@ function ViewSwitchButton({ viewMode, onToggle }) {
           animate={{ scale: isWeb ? 0.86 : 1 }}
           transition={{ type: "spring", stiffness: 430, damping: 28 }}
         >
-          <MobileIcon active={!isWeb} />
+          <ViewSwitchIcon active={!isWeb} type="mobile" />
         </motion.span>
         <motion.span
           className="grid h-full place-items-center rounded-full"
           animate={{ scale: isWeb ? 1 : 0.86 }}
           transition={{ type: "spring", stiffness: 430, damping: 28 }}
         >
-          <WebIcon active={isWeb} />
+          <ViewSwitchIcon active={isWeb} type="web" />
         </motion.span>
       </div>
     </button>
@@ -1174,14 +1177,14 @@ export default function App() {
       case "landing": return <Landing go={go} />;
       case "login": return <Login go={go} />;
       case "resumeUpload": return <ResumeUpload go={go} fromDashboard={hasReachedDashboard} />;
-      case "aiChatbot": return <AIChatbot go={go} chatMode={chatMode} fromDashboard={hasReachedDashboard} />;
+      case "aiChatbot": return <AIChatbot key={chatMode} go={go} chatMode={chatMode} fromDashboard={hasReachedDashboard} />;
       case "setup": return <Setup go={go} />;
       case "resumeInput": return <ResumeInput go={go} />;
       case "story": return <Story go={go} />;
       case "builder": return <Builder go={go} />;
       case "analysis": return <Analysis go={go} />;
       case "skill": return <Skill go={go} />;
-      case "dashboard": return <Dashboard go={go} appliedJobs={appliedJobs} savedJobs={savedJobs} onSaveJob={handleSaveJob} onApplyJob={handleApplyJob} noNav dashboardFilter={dashboardFilter} setDashboardFilter={setDashboardFilter} />;
+      case "dashboard": return <Dashboard go={go} appliedJobs={appliedJobs} savedJobs={savedJobs} onSaveJob={handleSaveJob} noNav dashboardFilter={dashboardFilter} setDashboardFilter={setDashboardFilter} />;
       case "jobSetup": return <JobSetup go={go} />;
       case "running": return <Running go={go} />;
       case "complete": return <Complete go={go} />;
@@ -1190,11 +1193,11 @@ export default function App() {
       case "tailor": return <Tailor go={go} selectedJob={selectedJob} />;
       case "review": return <Review go={go} selectedJob={selectedJob} />;
       case "submitted": return <Submitted go={go} selectedJob={selectedJob} onApply={handleApplyJob} />;
-      case "tracker": return <Profile go={go} noNav appliedCount={appliedJobs.length} savedCount={savedJobs.length} jobsCount={jobs.length} />;
+      case "tracker": return <Tracker go={go} />;
       case "profile": return <Profile go={go} noNav appliedCount={appliedJobs.length} savedCount={savedJobs.length} jobsCount={jobs.length} />;
       default: return <Landing go={go} />;
     }
-  }, [screen, selectedJob, viewMode, chatMode, appliedJobs, savedJobs, hasReachedDashboard, dashboardFilter]);
+  }, [screen, selectedJob, chatMode, appliedJobs, savedJobs, hasReachedDashboard, dashboardFilter]);
 
   const insideAppTransition = screen !== "landing";
   const tabbedScreens = ["dashboard", "profile", "tracker", "aiChatbot"];
