@@ -124,6 +124,88 @@ const formatUploadDate = (value) => {
   }).format(date);
 };
 
+const cleanPdfText = (value) => String(value || "")
+  .replace(/[\u2018\u2019]/g, "'")
+  .replace(/[\u201C\u201D]/g, '"')
+  .replace(/[^\x20-\x7E]/g, "-")
+  .slice(0, 92);
+
+const escapePdfText = (value) => cleanPdfText(value).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+
+const createSimplePdfBlob = (title, lines = []) => {
+  const safeLines = [title, "", ...lines].map((line) => escapePdfText(line));
+  const contentLines = ["BT", "/F1 18 Tf", "50 750 Td", `(${safeLines[0]}) Tj`, "/F1 10 Tf", "0 -24 Td"];
+  safeLines.slice(2, 38).forEach((line) => {
+    contentLines.push(`(${line}) Tj`, "0 -15 Td");
+  });
+  contentLines.push("ET");
+  const content = contentLines.join("\n");
+  const objects = [
+    "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
+    "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
+    "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>\nendobj\n",
+    "4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n",
+    `5 0 obj\n<< /Length ${content.length} >>\nstream\n${content}\nendstream\nendobj\n`,
+  ];
+  let pdf = "%PDF-1.4\n";
+  const offsets = [];
+  objects.forEach((object) => {
+    offsets.push(pdf.length);
+    pdf += object;
+  });
+  const xrefStart = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  offsets.forEach((offset) => {
+    pdf += `${String(offset).padStart(10, "0")} 00000 n \n`;
+  });
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
+  return new Blob([pdf], { type: "application/pdf" });
+};
+
+const buildAiGeneratedResume = (answers = []) => {
+  const answerText = answers.map((item) => item.answer).join(" ");
+  const today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const lines = [
+    "Chris Anderson",
+    "AI-generated resume draft - created by Syncra AI",
+    `Generated: ${today}`,
+    "",
+    "PROFILE SUMMARY",
+    "Entry-level UX and frontend candidate with experience in AI product prototyping,",
+    "responsive React interfaces, UI/UX planning, and user-centered design workflows.",
+    "",
+    "TARGET ROLE",
+    answers[0]?.answer || "Junior UX Designer, Frontend Developer, or Product Design Intern",
+    "",
+    "EDUCATION",
+    answers[1]?.answer || "International Business student with software project and UI/UX experience.",
+    "",
+    "PROJECT EXPERIENCE",
+    answers[2]?.answer || "Built an AI Career Copilot prototype with resume upload, chatbot, and job matching flows.",
+    "",
+    "SKILLS",
+    answers[3]?.answer || "React, JavaScript, Tailwind CSS, Figma, UI/UX Design, Prompt Engineering",
+    "",
+    "ACHIEVEMENTS",
+    answers[4]?.answer || "Created and deployed an interactive Vercel prototype for team testing.",
+    "",
+    "AI NOTES",
+    "This draft was generated from guided user answers and optimized for ATS-friendly sections.",
+  ];
+  const blob = createSimplePdfBlob("AI Generated Resume", lines);
+  return {
+    id: `ai-resume-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    name: "AI Generated Resume - Chris Anderson.pdf",
+    size: blob.size,
+    type: "application/pdf",
+    uploadedAt: new Date().toISOString(),
+    url: URL.createObjectURL(blob),
+    source: "Syncra AI",
+    summary: answerText.slice(0, 180),
+  };
+};
+
+
 const neoOut = "shadow-[12px_12px_28px_rgba(59,130,246,0.16),-12px_-12px_28px_rgba(255,255,255,0.78),inset_1px_1px_0_rgba(255,255,255,0.72)]";
 const neoIn = "shadow-[inset_6px_6px_14px_rgba(59,130,246,0.14),inset_-6px_-6px_14px_rgba(255,255,255,0.78)]";
 const ViewModeContext = React.createContext("mobile");
@@ -525,7 +607,7 @@ function ResumeUploadCard({ item, uploading = false, onOpen, onDelete }) {
   );
 }
 
-function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
+function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false, onStartBackgroundResume = () => {}, agentResumeNotice = null }) {
   const prefQuestions = [
     "What kind of job are you looking for? (e.g. UX Designer, Frontend Developer, Product Manager)",
     "What's your preferred location? (e.g. Remote, San Francisco, New York)",
@@ -542,12 +624,19 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
     "Any certifications, awards, or achievements you'd like to include?",
   ];
 
+  const helpWriteQuestions = [
+    "Question 1 of 5: What target role or internship are you applying for?",
+    "Question 2 of 5: Tell me about your education. Include school, major, graduation year, or relevant coursework.",
+    "Question 3 of 5: What project, experience, or class work should I highlight most?",
+    "Question 4 of 5: What skills, tools, or strengths should appear in your resume?",
+    "Question 5 of 5: Any achievements, links, or special points you want the resume to emphasize?",
+  ];
+
   const createResumeFlows = {
     "help me write it": [
-      "Absolutely. I’ll guide you like a resume coach and turn short answers into professional resume content.",
-      "I’ll build your resume in 4 parts: Profile Summary, Skills, Projects, and Experience. I’ll also keep it ATS-friendly.",
-      "Sample starting summary: Entry-level UX/frontend candidate with experience in React, Figma, AI prototyping, and user-centered product design.",
-      "Now tell me one project you are proud of. Even a short sentence is enough — I’ll rewrite it into strong resume bullet points."
+      "Absolutely. I’ll guide you like a resume coach and turn your answers into a professional resume draft.",
+      "I’ll ask 5 short questions. After your final answer, I’ll create the resume in the background so you can continue using the app.",
+      "Question 1 of 5: What target role or internship are you applying for?"
     ],
     "i'll type it out": [
       "Perfect. I’ll give you a simple structure so you can type your information naturally.",
@@ -616,6 +705,16 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
   const timersRef = useRef([]);
 
   const initialChatState = useMemo(() => {
+    if (agentResumeNotice && chatMode === "createResume") {
+      return {
+        messages: [
+          { from: "ai", text: `I finished creating ${agentResumeNotice.resumeName || "your AI-generated resume"} according to your answers.` },
+          { from: "ai", text: "I saved it in Profile → Career → Resumes. You can go there to preview the resume, delete it, or use it for job matching." },
+        ],
+        step: questions.length + 1,
+      };
+    }
+
     if (isChatOpen) {
       return {
         messages: [{ from: "ai", text: "Hi! I'm Syncra AI. How can I help you today? You can ask me about jobs, resumes, career advice, or anything else." }],
@@ -631,12 +730,14 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
       messages: [initial, { from: "ai", text: questions[0] }],
       step: 1,
     };
-  }, [chatMode, isChatOpen, questions]);
+  }, [agentResumeNotice, chatMode, isChatOpen, questions]);
 
   const [messages, setMessages] = useState(initialChatState.messages);
   const [inputText, setInputText] = useState("");
   const [step, setStep] = useState(initialChatState.step);
   const [isTyping, setIsTyping] = useState(false);
+  const [helpWriteStep, setHelpWriteStep] = useState(null);
+  const [helpWriteAnswers, setHelpWriteAnswers] = useState([]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -661,7 +762,7 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
     return null;
   };
 
-  const addAgentSequence = (userText, aiReplies) => {
+  const addAgentSequence = (userText, aiReplies, onComplete) => {
     timersRef.current.forEach((timer) => clearTimeout(timer));
     timersRef.current = [];
     setInputText("");
@@ -671,18 +772,65 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
     aiReplies.forEach((reply, index) => {
       const timer = setTimeout(() => {
         setMessages((prev) => [...prev, { from: "ai", text: reply }]);
-        if (index === aiReplies.length - 1) setIsTyping(false);
+        if (index === aiReplies.length - 1) {
+          setIsTyping(false);
+          onComplete?.();
+        }
       }, 650 + index * 850);
       timersRef.current.push(timer);
     });
   };
 
+  const startHelpWriteFlow = (userText) => {
+    setHelpWriteAnswers([]);
+    setHelpWriteStep(0);
+    addAgentSequence(userText, createResumeFlows["help me write it"]);
+  };
+
+  const handleHelpWriteAnswer = (userText) => {
+    const currentStep = helpWriteStep ?? 0;
+    const updatedAnswers = [
+      ...helpWriteAnswers,
+      { question: helpWriteQuestions[currentStep], answer: userText },
+    ];
+
+    if (currentStep < helpWriteQuestions.length - 1) {
+      const nextStep = currentStep + 1;
+      setHelpWriteAnswers(updatedAnswers);
+      setHelpWriteStep(nextStep);
+      addAgentSequence(userText, [
+        "Great — I saved that and will translate it into resume-ready wording.",
+        helpWriteQuestions[nextStep],
+      ]);
+      return;
+    }
+
+    setHelpWriteAnswers([]);
+    setHelpWriteStep(null);
+    onStartBackgroundResume(updatedAnswers);
+    addAgentSequence(userText, [
+      "Perfect. I have enough information to create your first resume draft.",
+      "I’m now writing the resume in the background: summary, education, skills, projects, and ATS-friendly bullet points.",
+      "You can leave this screen and keep using the app. I’ll notify you when the resume is ready.",
+    ]);
+  };
+
   const handleSend = () => {
     if (!inputText.trim() || isTyping) return;
     const userText = inputText.trim();
+
+    if (chatMode === "createResume" && helpWriteStep !== null) {
+      handleHelpWriteAnswer(userText);
+      return;
+    }
+
     const flow = getFlowForPrompt(userText);
     if (flow) {
-      addAgentSequence(userText, flow);
+      if (chatMode === "createResume" && normalizePrompt(userText) === "help me write it") {
+        startHelpWriteFlow(userText);
+      } else {
+        addAgentSequence(userText, flow);
+      }
       return;
     }
 
@@ -721,6 +869,10 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
 
   const handleQuickReply = (reply) => {
     if (isTyping) return;
+    if (chatMode === "createResume" && normalizePrompt(reply) === "help me write it") {
+      startHelpWriteFlow(reply);
+      return;
+    }
     const flow = getFlowForPrompt(reply);
     if (flow) addAgentSequence(reply, flow);
     else setInputText(reply);
@@ -1552,6 +1704,31 @@ function ViewSwitchIcon({ active, type }) {
   );
 }
 
+
+function AgentResumeNotification({ job, onClick }) {
+  if (!job?.notification) return null;
+
+  return (
+    <motion.button
+      type="button"
+      onClick={onClick}
+      initial={{ opacity: 0, y: -18, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: "spring", stiffness: 360, damping: 28 }}
+      className={`absolute left-4 right-4 top-16 z-[80] flex items-center gap-3 rounded-3xl border border-white/70 bg-white/75 p-4 text-left ${neoOut} backdrop-blur-2xl`}
+    >
+      <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-blue-600 text-white shadow-[8px_8px_18px_rgba(37,99,235,0.30)]`}>
+        <CheckCircle2 className="h-6 w-6" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-slate-900">Syncra AI finished your resume</p>
+        <p className="mt-1 truncate text-xs text-slate-600">Tap to view the chatbot update and check your resume list.</p>
+      </div>
+      <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+    </motion.button>
+  );
+}
+
 function ViewSwitchButton({ viewMode, onToggle }) {
   const isWeb = viewMode === "web";
 
@@ -1607,7 +1784,10 @@ export default function App() {
   const [dashboardFilter, setDashboardFilter] = useState("all");
   const [resumes, setResumes] = useState([]);
   const [uploadQueue, setUploadQueue] = useState([]);
+  const [agentResumeJob, setAgentResumeJob] = useState({ status: "idle", notification: false, resumeName: "" });
+  const [agentResumeNotice, setAgentResumeNotice] = useState(null);
   const uploadTimers = useRef([]);
+  const agentResumeTimer = useRef(null);
   const resumesRef = useRef([]);
 
   useEffect(() => {
@@ -1617,6 +1797,7 @@ export default function App() {
   useEffect(() => {
     return () => {
       uploadTimers.current.forEach((timer) => clearInterval(timer));
+      if (agentResumeTimer.current) clearTimeout(agentResumeTimer.current);
       resumesRef.current.forEach((resume) => resume.url && URL.revokeObjectURL(resume.url));
     };
   }, []);
@@ -1684,6 +1865,25 @@ export default function App() {
     setScreen("resumePreview");
   };
 
+  const handleStartBackgroundResume = (answers) => {
+    if (agentResumeTimer.current) clearTimeout(agentResumeTimer.current);
+    const resumeName = "AI Generated Resume - Chris Anderson.pdf";
+    setAgentResumeJob({ status: "running", notification: false, resumeName });
+
+    agentResumeTimer.current = setTimeout(() => {
+      const generatedResume = buildAiGeneratedResume(answers);
+      setResumes((prev) => [generatedResume, ...prev]);
+      setAgentResumeJob({ status: "done", notification: true, resumeName: generatedResume.name });
+    }, 6500);
+  };
+
+  const handleAgentNotificationClick = () => {
+    setAgentResumeJob((prev) => ({ ...prev, notification: false }));
+    setAgentResumeNotice({ resumeName: agentResumeJob.resumeName, timestamp: Date.now() });
+    setChatMode("createResume");
+    setScreen("aiChatbot");
+  };
+
   const handleSaveJob = (jobId) => {
     setSavedJobs((prev) => prev.includes(jobId) ? prev.filter((id) => id !== jobId) : [...prev, jobId]);
   };
@@ -1694,7 +1894,10 @@ export default function App() {
 
   const go = (next, job, mode, filterParam) => {
     if (job) setSelectedJob(job);
-    if (mode) setChatMode(mode);
+    if (mode) {
+      setChatMode(mode);
+      setAgentResumeNotice(null);
+    }
     if (filterParam) setDashboardFilter(filterParam);
     if (next === "dashboard") setHasReachedDashboard(true);
     setScreen(next);
@@ -1705,7 +1908,7 @@ export default function App() {
       case "landing": return <Landing go={go} />;
       case "login": return <Login go={go} />;
       case "resumeUpload": return <ResumeUpload go={go} fromDashboard={hasReachedDashboard} resumes={resumes} uploadQueue={uploadQueue} onUploadResume={handleUploadResume} onOpenResume={handleOpenResume} onDeleteResume={handleDeleteResume} />;
-      case "aiChatbot": return <AIChatbot key={chatMode} go={go} chatMode={chatMode} fromDashboard={hasReachedDashboard} />;
+      case "aiChatbot": return <AIChatbot key={`${chatMode}-${agentResumeNotice?.timestamp || "normal"}`} go={go} chatMode={chatMode} fromDashboard={hasReachedDashboard} onStartBackgroundResume={handleStartBackgroundResume} agentResumeNotice={agentResumeNotice} />;
       case "setup": return <Setup go={go} />;
       case "resumeInput": return <ResumeInput go={go} />;
       case "story": return <Story go={go} />;
@@ -1727,7 +1930,7 @@ export default function App() {
       case "profile": return <Profile go={go} noNav appliedCount={appliedJobs.length} savedCount={savedJobs.length} jobsCount={jobs.length} resumesCount={resumes.length} />;
       default: return <Landing go={go} />;
     }
-  }, [screen, selectedJob, selectedResume, resumePreviewBackTarget, chatMode, appliedJobs, savedJobs, hasReachedDashboard, dashboardFilter, resumes, uploadQueue]);
+  }, [screen, selectedJob, selectedResume, resumePreviewBackTarget, chatMode, agentResumeNotice, appliedJobs, savedJobs, hasReachedDashboard, dashboardFilter, resumes, uploadQueue]);
 
   const insideAppTransition = screen !== "landing";
   const tabbedScreens = ["dashboard", "profile", "tracker", "aiChatbot"];
@@ -1770,6 +1973,7 @@ export default function App() {
                     {component}
                   </div>
                 </div>
+                <AgentResumeNotification job={agentResumeJob} onClick={handleAgentNotificationClick} />
                 {/* Persistent floating nav bar for tabbed screens */}
                 {isTabbed && (
                   <div className="absolute bottom-6 left-6 right-6 z-40">
