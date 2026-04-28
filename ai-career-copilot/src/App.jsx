@@ -1917,9 +1917,8 @@ export default function App() {
 
   const handleAgentNotificationClick = () => {
     setAgentResumeJob((prev) => ({ ...prev, notification: false }));
-    setAgentResumeNotice({ resumeName: agentResumeJob.resumeName, timestamp: Date.now() });
-    setChatMode("createResume");
-    setScreen("aiChatbot");
+    setAgentResumeNotice(null);
+    setScreen("resumes");
   };
 
   const handleSaveJob = (jobId) => {
