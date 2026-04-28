@@ -393,6 +393,8 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
 
   const isChatOpen = chatMode === "chatOpen";
   const questions = chatMode === "createResume" ? createQuestions : prefQuestions;
+  const messagesEndRef = useRef(null);
+
   const initialChatState = useMemo(() => {
     if (isChatOpen) {
       return {
@@ -410,9 +412,14 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
       step: 1,
     };
   }, [chatMode, isChatOpen, questions]);
+
   const [messages, setMessages] = useState(initialChatState.messages);
   const [inputText, setInputText] = useState("");
   const [step, setStep] = useState(initialChatState.step);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages]);
 
   const handleSend = () => {
     if (!inputText.trim()) return;
@@ -420,7 +427,6 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
     setInputText("");
 
     if (isChatOpen) {
-      // Free chat mode - echo a simple AI response
       const replies = [
         "That's a great question! Let me help you with that.",
         "I can definitely assist with that. Tell me more!",
@@ -435,7 +441,6 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
       setMessages(newMessages);
       setStep(step + 1);
     } else {
-      // Final step
       if (chatMode === "createResume") {
         newMessages.push({ from: "ai", text: "Great! I have everything I need. Let me now ask about your preferences. What kind of job are you looking for?" });
         setMessages(newMessages);
@@ -455,90 +460,95 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
     : ["Remote only", "Full-time", "Entry level", "$50K–$80K"];
 
   return (
-    <PhoneShell><Screen>
-      {/* Back / Skip header */}
-      <div className="mb-4 flex items-center justify-between">
-        <button onClick={() => go(isChatOpen || fromDashboard ? "dashboard" : "resumeUpload")} className="flex items-center gap-1.5 text-sm font-medium text-slate-600 transition hover:text-slate-900">
-          <ArrowLeft className="h-4 w-4" /> Back
-        </button>
-        {!isChatOpen && (
-          <button onClick={() => go("dashboard")} className="text-sm font-medium text-slate-500 transition hover:text-blue-600">
-            Skip <ArrowRight className="inline h-3.5 w-3.5" />
+    <PhoneShell>
+      <div className="flex h-full min-h-0 flex-1 flex-col px-6 pb-[118px] pt-14">
+        {/* Back / Skip header */}
+        <div className="mb-4 flex shrink-0 items-center justify-between">
+          <button onClick={() => go(isChatOpen || fromDashboard ? "dashboard" : "resumeUpload")} className="flex items-center gap-1.5 text-sm font-medium text-slate-600 transition hover:text-slate-900">
+            <ArrowLeft className="h-4 w-4" /> Back
           </button>
-        )}
-      </div>
-
-      {/* Chat header */}
-      <div className="mb-5 flex items-center gap-3">
-        <div className={`grid h-10 w-10 place-items-center rounded-full border border-white/70 bg-purple-100/55 text-lg ${neoOut}`}>🤖</div>
-        <div>
-          <h2 className="text-sm font-semibold text-slate-900">Syncra AI</h2>
-          <p className="text-xs text-blue-700">Online · {isChatOpen ? "Chat" : chatMode === "createResume" ? "Building Resume" : "Setting Preferences"}</p>
+          {!isChatOpen && (
+            <button onClick={() => go("dashboard")} className="text-sm font-medium text-slate-500 transition hover:text-blue-600">
+              Skip <ArrowRight className="inline h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
-        <div className="ml-auto">
-          <StepPill>{isChatOpen ? "Chat" : chatMode === "createResume" ? "Resume" : "Preferences"}</StepPill>
+
+        {/* Chat header */}
+        <div className="mb-4 flex shrink-0 items-center gap-3">
+          <div className={`grid h-10 w-10 place-items-center rounded-full border border-white/70 bg-purple-100/55 text-lg ${neoOut}`}>🤖</div>
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">Syncra AI</h2>
+            <p className="text-xs text-blue-700">Online · {isChatOpen ? "Chat" : chatMode === "createResume" ? "Building Resume" : "Setting Preferences"}</p>
+          </div>
+          <div className="ml-auto">
+            <StepPill>{isChatOpen ? "Chat" : chatMode === "createResume" ? "Resume" : "Preferences"}</StepPill>
+          </div>
+        </div>
+
+        {/* Messages stay in the flexible middle area. The input below never moves. */}
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden py-3 pr-1 no-scrollbar">
+          <div className="space-y-3">
+            {messages.map((msg, i) => (
+              <motion.div
+                key={`${msg.from}-${i}-${msg.text.slice(0, 12)}`}
+                initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                className={msg.from === "ai"
+                  ? `max-w-[85%] rounded-2xl rounded-tl-sm border border-white/60 bg-white/45 p-4 text-sm leading-6 text-slate-800 ${neoOut} backdrop-blur-xl`
+                  : "ml-auto max-w-[85%] rounded-2xl rounded-tr-sm bg-blue-600 p-4 text-sm leading-6 text-white shadow-[8px_8px_18px_rgba(37,99,235,0.25)]"
+                }
+              >
+                {msg.text}
+              </motion.div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+
+        {/* Bottom composer area, ChatGPT-style: fixed at bottom of app screen */}
+        <div className="shrink-0 pt-3">
+          <div className="mb-2 flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+            {quickReplies.map((q) => (
+              <button
+                key={q}
+                onClick={() => { setInputText(q); }}
+                className={`shrink-0 rounded-full border border-white/60 bg-white/45 px-4 py-2 text-xs font-semibold text-slate-700 ${neoOut} transition hover:bg-white/55`}
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+
+          <div className={`rounded-2xl border border-white/60 bg-white/35 p-2 ${neoIn} backdrop-blur-xl`}>
+            <div className="flex items-center gap-2 rounded-xl bg-transparent px-2 py-1 text-sm">
+              <input
+                type="text"
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                placeholder="Type your answer..."
+                className="w-full flex-1 bg-transparent text-slate-700 outline-none placeholder:text-slate-400"
+              />
+              <button
+                onClick={handleSend}
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-blue-600 text-white shadow-lg transition hover:bg-blue-700"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          {!isChatOpen && (
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <SecondaryButton onClick={() => go("dashboard")}>Save & Continue</SecondaryButton>
+              <SecondaryButton onClick={() => go("dashboard")}>Skip to Dashboard</SecondaryButton>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Chat messages */}
-      <div className="space-y-3" style={{ maxHeight: "340px", overflowY: "auto" }}>
-        {messages.map((msg, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-            className={msg.from === "ai"
-              ? `max-w-[85%] rounded-2xl rounded-tl-sm border border-white/60 bg-white/45 p-4 text-sm leading-6 text-slate-800 ${neoOut} backdrop-blur-xl`
-              : "ml-auto max-w-[85%] rounded-2xl rounded-tr-sm bg-blue-600 p-4 text-sm leading-6 text-white shadow-[8px_8px_18px_rgba(37,99,235,0.25)]"
-            }
-          >
-            {msg.text}
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Quick replies */}
-      <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
-        {quickReplies.map((q) => (
-          <button
-            key={q}
-            onClick={() => { setInputText(q); }}
-            className={`shrink-0 rounded-full border border-white/60 bg-white/45 px-4 py-2 text-xs font-semibold text-slate-700 ${neoOut} transition hover:bg-white/55`}
-          >
-            {q}
-          </button>
-        ))}
-      </div>
-
-      {/* Chat input */}
-      <div className={`mt-2 rounded-2xl border border-white/60 bg-white/35 p-2 ${neoIn} backdrop-blur-xl`}>
-        <div className="flex items-center gap-2 rounded-xl bg-transparent px-2 py-1 text-sm">
-          <input
-            type="text"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Type your answer..."
-            className="w-full flex-1 bg-transparent text-slate-700 outline-none placeholder:text-slate-400"
-          />
-          <button
-            onClick={handleSend}
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-blue-600 text-white shadow-lg transition hover:bg-blue-700"
-          >
-            <Send className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Continue / Save buttons */}
-      {!isChatOpen && (
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <SecondaryButton onClick={() => go("dashboard")}>Save & Continue</SecondaryButton>
-          <SecondaryButton onClick={() => go("dashboard")}>Skip to Dashboard</SecondaryButton>
-        </div>
-      )}
-    </Screen></PhoneShell>
+    </PhoneShell>
   );
 }
 
