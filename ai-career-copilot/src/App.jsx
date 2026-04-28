@@ -191,23 +191,23 @@ const PhoneShell = ({ children, forceMobile = false }) => {
   );
 };
 
-const Screen = ({ children, nav, floatingNav, className = "", go = () => {}, activeTab = "home", onFabClick }) => (
+const Screen = ({ children, nav, floatingNav, className = "", go = () => {}, activeTab = "home" }) => (
   <div className={`flex h-full min-h-0 flex-1 flex-col ${className}`}>
     <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden no-scrollbar">
       <div className={`px-6 pt-8 ${floatingNav ? "pb-28" : "pb-5"}`}>{children}</div>
     </div>
     {nav && (
       <div className="px-6 pb-6 pt-2">
-        <BottomNav go={go} activeTab={activeTab} onFabClick={onFabClick} />
+        <BottomNav go={go} activeTab={activeTab} />
       </div>
     )}
   </div>
 );
 
-function BottomNav({ go = () => {}, activeTab = "home", onFabClick }) {
+function BottomNav({ go = () => {}, activeTab = "home" }) {
   const items = [
     { icon: Home, label: "Home", key: "home", target: "dashboard" },
-    { icon: Plus, label: "", key: "create", target: "resumeUpload" },
+    { icon: Bot, label: "", key: "aiChatbot", target: "aiChatbot", mode: "chatOpen" },
     { icon: User, label: "Profile", key: "profile", target: "profile" },
   ];
   return (
@@ -217,7 +217,7 @@ function BottomNav({ go = () => {}, activeTab = "home", onFabClick }) {
         const active = activeTab === item.key;
         if (i === 1) {
           return (
-            <button key={item.key} onClick={() => (onFabClick ? onFabClick() : go(item.target))} className="mx-auto grid h-12 w-12 place-items-center rounded-2xl border border-blue-300/30 bg-blue-600 text-white shadow-[8px_8px_18px_rgba(37,99,235,0.35),-6px_-6px_16px_rgba(255,255,255,0.55)] transition hover:scale-[1.03] active:shadow-[inset_5px_5px_12px_rgba(30,64,175,0.35)]">
+            <button key={item.key} onClick={() => go(item.target, null, item.mode)} className="mx-auto grid h-12 w-12 place-items-center rounded-2xl border border-blue-300/30 bg-blue-600 text-white shadow-[8px_8px_18px_rgba(37,99,235,0.35),-6px_-6px_16px_rgba(255,255,255,0.55)] transition hover:scale-[1.03] active:shadow-[inset_5px_5px_12px_rgba(30,64,175,0.35)]">
               <Icon className="h-5 w-5" />
             </button>
           );
@@ -616,7 +616,7 @@ function Skill({ go }) {
   );
 }
 
-function Dashboard({ go = () => {}, mini = false, onFabClick, appliedJobs = [], savedJobs = [], onSaveJob = () => {}, onApplyJob = () => {}, noNav = false, dashboardFilter = "all", setDashboardFilter }) {
+function Dashboard({ go = () => {}, mini = false, appliedJobs = [], savedJobs = [], onSaveJob = () => {}, onApplyJob = () => {}, noNav = false, dashboardFilter = "all", setDashboardFilter }) {
   const [bannerIndex, setBannerIndex] = useState(0);
   const [progressKey, setProgressKey] = useState(0);
   const BANNER_DURATION = 3000;
@@ -697,7 +697,7 @@ function Dashboard({ go = () => {}, mini = false, onFabClick, appliedJobs = [], 
   };
 
   return (
-    <Screen nav={!mini && !noNav} floatingNav={noNav} go={go} activeTab="home" onFabClick={onFabClick}>
+    <Screen nav={!mini && !noNav} floatingNav={noNav} go={go} activeTab="home">
       {/* Header with profile + notification */}
       <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-transparent px-6 pb-3 pt-12 backdrop-blur">
         <div className="flex items-center gap-2">
@@ -709,7 +709,7 @@ function Dashboard({ go = () => {}, mini = false, onFabClick, appliedJobs = [], 
           </div>
         </div>
         <div className={`flex items-center rounded-full border border-white/60 bg-white/35 px-1 py-1 shadow-sm backdrop-blur-sm ${neoOut}`}>
-          <button className="grid h-7 w-8 place-items-center rounded-full text-slate-700 transition hover:bg-white/50">
+          <button onClick={() => go("resumeUpload")} className="grid h-7 w-8 place-items-center rounded-full text-slate-700 transition hover:bg-white/50">
             <Plus className="h-4 w-4" />
           </button>
           <div className="mx-0.5 h-3.5 w-px bg-slate-300/60" />
@@ -860,15 +860,7 @@ function Dashboard({ go = () => {}, mini = false, onFabClick, appliedJobs = [], 
           );
         })
       )}
-      {/* Floating Chatbot FAB */}
-      {!mini && (
-        <button
-          onClick={() => go("aiChatbot", null, "chatOpen")}
-          className="fixed bottom-[120px] right-8 z-40 grid h-14 w-14 place-items-center rounded-full border border-blue-300/30 bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-[8px_8px_22px_rgba(37,99,235,0.40),-4px_-4px_12px_rgba(255,255,255,0.25)] transition hover:scale-105 hover:shadow-[10px_10px_28px_rgba(37,99,235,0.50)] active:scale-95"
-        >
-          <Bot className="h-6 w-6" />
-        </button>
-      )}
+
     </Screen>
   );
 }
@@ -1076,17 +1068,7 @@ function Profile({ go, noNav = false, appliedCount, savedCount, jobsCount }) {
   );
 }
 
-function QuickStartModal({ close, go }) {
-  const opts = [[Wand2, "Answer a few questions, get a tailored resume.", "story"], [FileText, "Pick a clean, ATS-friendly layout.", "builder"], [Upload, "Import a PDF and refine it here.", "resumeInput"]];
-  return (
-    <div className="absolute inset-0 z-50 flex items-end justify-center bg-slate-900/45 p-3 backdrop-blur-sm">
-      <motion.div initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className={`w-full rounded-[2rem] border border-white/70 bg-white/55 p-6 ${neoOut} backdrop-blur-2xl`}>
-        <div className="mb-5 flex items-center justify-between"><p className="text-sm text-slate-600">How would you like to start?</p><button onClick={close} className={`grid h-10 w-10 place-items-center rounded-full bg-blue-50/60 text-slate-400 ${neoOut}`}><X className="h-5 w-5" /></button></div>
-        <div className="space-y-3">{opts.map(([Icon, text, target]) => <button key={text} onClick={() => { close(); go(target); }} className={`flex w-full items-center gap-4 rounded-2xl border border-white/70 bg-white/35 p-4 text-left ${neoOut}`}><div className={`grid h-12 w-12 place-items-center rounded-2xl bg-blue-100/70 text-blue-500 ${neoIn}`}><Icon className="h-5 w-5" /></div><span className="text-sm text-slate-600">{text}</span></button>)}</div>
-      </motion.div>
-    </div>
-  );
-}
+
 
 function ViewSwitchButton({ viewMode, onToggle }) {
   const isWeb = viewMode === "web";
@@ -1164,7 +1146,6 @@ function ViewSwitchButton({ viewMode, onToggle }) {
 export default function App() {
   const [screen, setScreen] = useState("landing");
   const [selectedJob, setSelectedJob] = useState(jobs[0]);
-  const [modal, setModal] = useState(false);
   const [viewMode, setViewMode] = useState("mobile");
   const [chatMode, setChatMode] = useState("setPreferences");
   const [appliedJobs, setAppliedJobs] = useState([]);
@@ -1184,7 +1165,6 @@ export default function App() {
     if (job) setSelectedJob(job);
     if (mode) setChatMode(mode);
     if (filterParam) setDashboardFilter(filterParam);
-    if (next === "builder") setModal(false);
     if (next === "dashboard") setHasReachedDashboard(true);
     setScreen(next);
   };
@@ -1214,12 +1194,12 @@ export default function App() {
       case "profile": return <Profile go={go} noNav appliedCount={appliedJobs.length} savedCount={savedJobs.length} jobsCount={jobs.length} />;
       default: return <Landing go={go} />;
     }
-  }, [screen, selectedJob, modal, viewMode, chatMode, appliedJobs, savedJobs, hasReachedDashboard, dashboardFilter]);
+  }, [screen, selectedJob, viewMode, chatMode, appliedJobs, savedJobs, hasReachedDashboard, dashboardFilter]);
 
   const insideAppTransition = screen !== "landing";
-  const tabbedScreens = ["dashboard", "profile", "tracker"];
+  const tabbedScreens = ["dashboard", "profile", "tracker", "aiChatbot"];
   const isTabbed = tabbedScreens.includes(screen);
-  const activeTab = screen === "profile" || screen === "tracker" ? "profile" : "home";
+  const activeTab = screen === "profile" || screen === "tracker" ? "profile" : screen === "aiChatbot" ? "aiChatbot" : "home";
 
   return (
     <ViewModeContext.Provider value={viewMode}>
@@ -1232,7 +1212,6 @@ export default function App() {
           {screen !== "landing" && (
             <button
               onClick={() => {
-                setModal(false);
                 setScreen("landing");
               }}
               className="rounded-full bg-white/90 px-4 py-2 text-xs font-semibold text-blue-700 shadow transition hover:-translate-y-0.5 hover:bg-white"
