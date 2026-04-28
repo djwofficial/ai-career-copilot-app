@@ -37,6 +37,9 @@ import {
   CreditCard,
   Palette,
   Camera,
+  Wifi,
+  Battery,
+  Signal,
 } from "lucide-react";
 
 const jobs = [
@@ -169,6 +172,17 @@ const PhoneShell = ({ children, forceMobile = false }) => {
         <div className="pointer-events-none absolute right-[6px] top-48 h-12 w-[3px] rounded-full bg-slate-700/90" />
         <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[2.2rem] border border-white/60 bg-gradient-to-br from-blue-100 via-blue-200 to-blue-300">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(255,255,255,.68),transparent_34%),radial-gradient(circle_at_85%_20%,rgba(255,255,255,.42),transparent_28%),linear-gradient(145deg,rgba(255,255,255,.26),rgba(96,165,250,.08))]" />
+          
+          {/* Status Bar */}
+          <div className="pointer-events-none absolute left-0 right-0 top-0 z-50 flex h-14 items-start justify-between px-7 pt-[14px] text-[13px] font-semibold tracking-wide text-slate-800">
+            <span>17:56</span>
+            <div className="mt-0.5 flex items-center gap-1.5">
+              <Signal className="h-[14px] w-[14px]" />
+              <Wifi className="h-[14px] w-[14px]" />
+              <Battery className="h-[15px] w-[15px]" />
+            </div>
+          </div>
+
           <div className="relative z-10 flex h-full min-h-0 flex-1 flex-col overflow-hidden">{children}</div>
           <div className="pointer-events-none absolute bottom-2 left-1/2 z-30 h-1.5 w-36 -translate-x-1/2 rounded-full bg-slate-400/80" />
         </div>
@@ -685,7 +699,25 @@ function Dashboard({ go = () => {}, mini = false, onFabClick, appliedJobs = [], 
   return (
     <Screen nav={!mini && !noNav} floatingNav={noNav} go={go} activeTab="home" onFabClick={onFabClick}>
       {/* Header with profile + notification */}
-      <Header title="Good morning, Chris" subtitle="Your AI agent is ready" icon={<GlassIcon className="h-12 w-12 rounded-2xl"><span className="text-2xl">🪙</span></GlassIcon>} action={<button className={`grid h-12 w-12 place-items-center rounded-2xl border border-white/60 bg-white/35 text-slate-700 ${neoOut}`}><Bell className="h-5 w-5" /></button>} />
+      <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-transparent px-6 pb-3 pt-12 backdrop-blur">
+        <div className="flex items-center gap-2">
+          <button onClick={() => go("profile")} className="grid h-8 w-8 place-items-center rounded-full bg-blue-100 text-blue-600 shadow-sm ring-1 ring-white/60 transition hover:scale-105">
+            <span className="text-sm">🪙</span>
+          </button>
+          <div className="flex items-center gap-0.5 text-base font-bold tracking-tight text-slate-800">
+            syncra<Sparkles className="mb-2 h-2.5 w-2.5 text-blue-500" />
+          </div>
+        </div>
+        <div className={`flex items-center rounded-full border border-white/60 bg-white/35 px-1 py-1 shadow-sm backdrop-blur-sm ${neoOut}`}>
+          <button className="grid h-7 w-8 place-items-center rounded-full text-slate-700 transition hover:bg-white/50">
+            <Plus className="h-4 w-4" />
+          </button>
+          <div className="mx-0.5 h-3.5 w-px bg-slate-300/60" />
+          <button className="grid h-7 w-8 place-items-center rounded-full text-slate-700 transition hover:bg-white/50">
+            <Bell className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
 
       {/* Story-style Summary Banners */}
       <div className="relative mb-4">
@@ -921,8 +953,8 @@ function Profile({ go, noNav = false, appliedCount, savedCount, jobsCount }) {
     <PhoneShell>
       <Screen nav={!noNav} floatingNav={noNav} go={go} activeTab="profile">
         {/* Header matching the screenshot */}
-        <div className="mb-6 flex items-center justify-between">
-           <button onClick={() => go("dashboard")} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/30 text-slate-800 transition hover:bg-white/50">
+        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-6 flex items-center justify-between bg-transparent px-6 pb-4 pt-12 backdrop-blur-sm">
+           <button onClick={() => go("dashboard")} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/60 text-slate-800 shadow-sm transition hover:bg-white/80">
               <ChevronLeft className="h-5 w-5" />
            </button>
            <h1 className="text-lg font-semibold text-slate-900">Settings</h1>
