@@ -1,7 +1,8 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useMemo, useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
+  ArrowLeft,
   Upload,
   Mail,
   Lock,
@@ -27,7 +28,15 @@ import {
   BarChart3,
   ClipboardList,
   ChevronRight,
+  ChevronLeft,
   Star,
+  MessageCircle,
+  PenLine,
+  Filter,
+  Clock,
+  CreditCard,
+  Palette,
+  Camera,
 } from "lucide-react";
 
 const jobs = [
@@ -168,10 +177,10 @@ const PhoneShell = ({ children, forceMobile = false }) => {
   );
 };
 
-const Screen = ({ children, nav, className = "", go = () => {}, activeTab = "home", onFabClick }) => (
+const Screen = ({ children, nav, floatingNav, className = "", go = () => {}, activeTab = "home", onFabClick }) => (
   <div className={`flex h-full min-h-0 flex-1 flex-col ${className}`}>
     <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden no-scrollbar">
-      <div className="px-6 pb-5 pt-8">{children}</div>
+      <div className={`px-6 pt-8 ${floatingNav ? "pb-28" : "pb-5"}`}>{children}</div>
     </div>
     {nav && (
       <div className="px-6 pb-6 pt-2">
@@ -184,17 +193,15 @@ const Screen = ({ children, nav, className = "", go = () => {}, activeTab = "hom
 function BottomNav({ go = () => {}, activeTab = "home", onFabClick }) {
   const items = [
     { icon: Home, label: "Home", key: "home", target: "dashboard" },
-    { icon: FileText, label: "Resume", key: "resume", target: "builder" },
-    { icon: Plus, label: "", key: "create", target: "builder" },
-    { icon: Briefcase, label: "Jobs", key: "jobs", target: "results" },
+    { icon: Plus, label: "", key: "create", target: "resumeUpload" },
     { icon: User, label: "Profile", key: "profile", target: "profile" },
   ];
   return (
-    <div className={`grid grid-cols-5 items-center rounded-3xl border border-white/70 bg-white/35 p-2 ${neoOut} backdrop-blur-2xl`}>
+    <div className={`grid grid-cols-3 items-center rounded-3xl border border-white/70 bg-white/35 p-2 ${neoOut} backdrop-blur-2xl`}>
       {items.map((item, i) => {
         const Icon = item.icon;
         const active = activeTab === item.key;
-        if (i === 2) {
+        if (i === 1) {
           return (
             <button key={item.key} onClick={() => (onFabClick ? onFabClick() : go(item.target))} className="mx-auto grid h-12 w-12 place-items-center rounded-2xl border border-blue-300/30 bg-blue-600 text-white shadow-[8px_8px_18px_rgba(37,99,235,0.35),-6px_-6px_16px_rgba(255,255,255,0.55)] transition hover:scale-[1.03] active:shadow-[inset_5px_5px_12px_rgba(30,64,175,0.35)]">
               <Icon className="h-5 w-5" />
@@ -256,7 +263,7 @@ function Landing({ go }) {
 function Login({ go }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const handleSubmit = (e) => { e.preventDefault(); go("dashboard"); };
+  const handleSubmit = (e) => { e.preventDefault(); go("resumeUpload"); };
   return (
     <PhoneShell>
       <Screen>
@@ -271,12 +278,256 @@ function Login({ go }) {
             </div>
             <PrimaryButton className="mt-7" onClick={handleSubmit}>Sign in <ArrowRight className="h-4 w-4" /></PrimaryButton>
             <div className="my-6 flex items-center gap-3 text-xs text-slate-500"><span className="h-px flex-1 bg-blue-200" /> or continue with <span className="h-px flex-1 bg-blue-200" /></div>
-            <div className="grid grid-cols-2 gap-3"><SecondaryButton onClick={() => go("setup")}>Google</SecondaryButton><SecondaryButton onClick={() => go("dashboard")}>Demo Mode</SecondaryButton></div>
+            <div className="grid grid-cols-2 gap-3"><SecondaryButton onClick={() => go("resumeUpload")}>Google</SecondaryButton><SecondaryButton onClick={() => go("resumeUpload")}>Demo Mode</SecondaryButton></div>
           </div>
-          <p className="pb-2 text-center text-sm text-slate-700">Don&apos;t have an account? <button type="button" onClick={() => go("setup")} className="font-semibold text-blue-600">Sign up</button></p>
+          <p className="pb-2 text-center text-sm text-slate-700">Don&apos;t have an account? <button type="button" onClick={() => go("resumeUpload")} className="font-semibold text-blue-600">Sign up</button></p>
         </form>
       </Screen>
     </PhoneShell>
+  );
+}
+
+function ResumeUpload({ go, fromDashboard = false }) {
+  const [uploaded, setUploaded] = useState(false);
+  return (
+    <PhoneShell><Screen>
+      {/* Back / Skip header */}
+      <div className="mb-4 flex items-center justify-between">
+        <button onClick={() => go(fromDashboard ? "dashboard" : "login")} className="flex items-center gap-1.5 text-sm font-medium text-slate-600 transition hover:text-slate-900">
+          <ArrowLeft className="h-4 w-4" /> Back
+        </button>
+        <button onClick={() => go("dashboard")} className="text-sm font-medium text-slate-500 transition hover:text-blue-600">
+          Skip <ArrowRight className="inline h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      <div className="mx-auto mb-6 w-fit"><GlassIcon><FileText className="h-8 w-8 text-blue-600" /></GlassIcon></div>
+      <h1 className="text-xl font-semibold text-slate-900">Your Resume</h1>
+      <p className="mt-2 text-sm text-slate-600">Upload your existing resume or create a brand new one with AI assistance.</p>
+
+      {/* Upload Resume Option */}
+      <button
+        onClick={() => { setUploaded(true); }}
+        className={`mt-6 flex w-full items-center gap-4 rounded-3xl border border-white/60 p-5 text-left transition ${uploaded ? `bg-blue-50/50 border-blue-300/60 ${neoIn}` : `bg-white/30 ${neoOut} hover:bg-white/40`} backdrop-blur-xl`}
+      >
+        <div className={`grid h-14 w-14 shrink-0 place-items-center rounded-2xl ${uploaded ? "bg-blue-600 text-white shadow-[8px_8px_18px_rgba(37,99,235,0.30)]" : `bg-blue-100/60 text-blue-600 ${neoIn}`}`}>
+          <Upload className="h-6 w-6" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-slate-900">Upload Resume</h3>
+          <p className="mt-1 text-xs text-slate-500">I already have a resume (PDF, DOCX)</p>
+        </div>
+        {uploaded && <CheckCircle2 className="ml-auto h-5 w-5 shrink-0 text-blue-600" />}
+      </button>
+
+      {/* Upload drop zone - shown when upload is selected */}
+      {uploaded && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          className="overflow-hidden"
+        >
+          <div className={`mt-3 flex h-32 w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-blue-300/60 bg-blue-50/30 text-blue-700 ${neoIn} backdrop-blur-xl`}>
+            <Upload className="mb-2 h-6 w-6" />
+            <span className="text-sm font-medium">Tap to upload or drag & drop</span>
+            <span className="mt-1 text-xs text-slate-500">PDF, DOCX up to 5MB</span>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Create New Resume Option */}
+      <button
+        onClick={() => go("aiChatbot", null, "createResume")}
+        className={`mt-3 flex w-full items-center gap-4 rounded-3xl border border-white/60 bg-white/30 p-5 text-left ${neoOut} backdrop-blur-xl transition hover:bg-white/40`}
+      >
+        <div className={`grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-purple-100/60 text-purple-600 ${neoIn}`}>
+          <PenLine className="h-6 w-6" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-slate-900">Create New Resume</h3>
+          <p className="mt-1 text-xs text-slate-500">Build one from scratch with AI help</p>
+        </div>
+        <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-slate-400" />
+      </button>
+
+      {/* Continue with uploaded resume */}
+      <div className="mt-8 space-y-3">
+        <PrimaryButton
+          disabled={!uploaded}
+          onClick={() => go("aiChatbot", null, "setPreferences")}
+        >
+          Continue with Resume <ArrowRight className="h-4 w-4" />
+        </PrimaryButton>
+        <button onClick={() => go("dashboard")} className="w-full py-2 text-sm text-slate-500 transition hover:text-slate-700">Skip for now</button>
+      </div>
+    </Screen></PhoneShell>
+  );
+}
+
+function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false }) {
+  const [messages, setMessages] = useState([]);
+  const [inputText, setInputText] = useState("");
+  const [step, setStep] = useState(0);
+
+  const prefQuestions = [
+    "What kind of job are you looking for? (e.g. UX Designer, Frontend Developer, Product Manager)",
+    "What's your preferred location? (e.g. Remote, San Francisco, New York)",
+    "Do you prefer remote, hybrid, or on-site work?",
+    "What's your expected salary range?",
+    "Any industry preferences? (e.g. Tech, Finance, Healthcare)",
+  ];
+
+  const createQuestions = [
+    "Let's build your resume! What's your current or most recent job title?",
+    "Tell me about your education — school name, degree, and graduation year.",
+    "What are your top 5 skills? (e.g. React, Figma, Python, Project Management)",
+    "Describe your most notable work experience or project in 1-2 sentences.",
+    "Any certifications, awards, or achievements you'd like to include?",
+  ];
+
+  const isChatOpen = chatMode === "chatOpen";
+  const questions = chatMode === "createResume" ? createQuestions : prefQuestions;
+
+  // Initialize first message
+  React.useEffect(() => {
+    if (isChatOpen) {
+      setMessages([{ from: "ai", text: "Hi! I'm Syncra AI. How can I help you today? You can ask me about jobs, resumes, career advice, or anything else." }]);
+      setStep(0);
+      return;
+    }
+    const initial = chatMode === "createResume"
+      ? { from: "user", text: "I want to create a resume" }
+      : { from: "user", text: "I want to set my preferences" };
+    const aiReply = { from: "ai", text: questions[0] };
+    setMessages([initial, aiReply]);
+    setStep(1);
+  }, [chatMode]);
+
+  const handleSend = () => {
+    if (!inputText.trim()) return;
+    const newMessages = [...messages, { from: "user", text: inputText }];
+    setInputText("");
+
+    if (isChatOpen) {
+      // Free chat mode - echo a simple AI response
+      const replies = [
+        "That's a great question! Let me help you with that.",
+        "I can definitely assist with that. Tell me more!",
+        "Based on your profile, I'd recommend exploring roles in UX and frontend development.",
+        "Would you like me to search for relevant opportunities?",
+        "I've noted that. Is there anything else you'd like to discuss?",
+      ];
+      newMessages.push({ from: "ai", text: replies[messages.length % replies.length] });
+      setMessages(newMessages);
+    } else if (step < questions.length) {
+      newMessages.push({ from: "ai", text: questions[step] });
+      setMessages(newMessages);
+      setStep(step + 1);
+    } else {
+      // Final step
+      if (chatMode === "createResume") {
+        newMessages.push({ from: "ai", text: "Great! I have everything I need. Let me now ask about your preferences. What kind of job are you looking for?" });
+        setMessages(newMessages);
+        setStep(step + 1);
+      } else {
+        newMessages.push({ from: "ai", text: "Perfect! I've saved your preferences. Let me find the best matches for you. Redirecting to your dashboard..." });
+        setMessages(newMessages);
+        setTimeout(() => go("dashboard"), 2000);
+      }
+    }
+  };
+
+  const quickReplies = isChatOpen
+    ? ["Find me jobs", "Improve my resume", "Career advice", "Salary insights"]
+    : chatMode === "createResume"
+    ? ["Help me write it", "I'll type it out", "Use my LinkedIn"]
+    : ["Remote only", "Full-time", "Entry level", "$50K–$80K"];
+
+  return (
+    <PhoneShell><Screen>
+      {/* Back / Skip header */}
+      <div className="mb-4 flex items-center justify-between">
+        <button onClick={() => go(isChatOpen || fromDashboard ? "dashboard" : "resumeUpload")} className="flex items-center gap-1.5 text-sm font-medium text-slate-600 transition hover:text-slate-900">
+          <ArrowLeft className="h-4 w-4" /> Back
+        </button>
+        {!isChatOpen && (
+          <button onClick={() => go("dashboard")} className="text-sm font-medium text-slate-500 transition hover:text-blue-600">
+            Skip <ArrowRight className="inline h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+
+      {/* Chat header */}
+      <div className="mb-5 flex items-center gap-3">
+        <div className={`grid h-10 w-10 place-items-center rounded-full border border-white/70 bg-purple-100/55 text-lg ${neoOut}`}>🤖</div>
+        <div>
+          <h2 className="text-sm font-semibold text-slate-900">Syncra AI</h2>
+          <p className="text-xs text-blue-700">Online · {isChatOpen ? "Chat" : chatMode === "createResume" ? "Building Resume" : "Setting Preferences"}</p>
+        </div>
+        <div className="ml-auto">
+          <StepPill>{isChatOpen ? "Chat" : chatMode === "createResume" ? "Resume" : "Preferences"}</StepPill>
+        </div>
+      </div>
+
+      {/* Chat messages */}
+      <div className="space-y-3" style={{ maxHeight: "340px", overflowY: "auto" }}>
+        {messages.map((msg, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.05 }}
+            className={msg.from === "ai"
+              ? `max-w-[85%] rounded-2xl rounded-tl-sm border border-white/60 bg-white/45 p-4 text-sm leading-6 text-slate-800 ${neoOut} backdrop-blur-xl`
+              : "ml-auto max-w-[85%] rounded-2xl rounded-tr-sm bg-blue-600 p-4 text-sm leading-6 text-white shadow-[8px_8px_18px_rgba(37,99,235,0.25)]"
+            }
+          >
+            {msg.text}
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Quick replies */}
+      <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
+        {quickReplies.map((q) => (
+          <button
+            key={q}
+            onClick={() => { setInputText(q); }}
+            className={`shrink-0 rounded-full border border-white/60 bg-white/45 px-4 py-2 text-xs font-semibold text-slate-700 ${neoOut} transition hover:bg-white/55`}
+          >
+            {q}
+          </button>
+        ))}
+      </div>
+
+      {/* Chat input */}
+      <div className={`mt-2 rounded-2xl border border-white/60 bg-white/35 p-2 ${neoIn} backdrop-blur-xl`}>
+        <div className="flex items-center gap-2 rounded-xl bg-transparent px-2 py-1 text-sm">
+          <input
+            type="text"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            placeholder="Type your answer..."
+            className="w-full flex-1 bg-transparent text-slate-700 outline-none placeholder:text-slate-400"
+          />
+          <button
+            onClick={handleSend}
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-blue-600 text-white shadow-lg transition hover:bg-blue-700"
+          >
+            <Send className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Continue / Save buttons */}
+      {!isChatOpen && (
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <SecondaryButton onClick={() => go("dashboard")}>Save & Continue</SecondaryButton>
+          <SecondaryButton onClick={() => go("dashboard")}>Skip to Dashboard</SecondaryButton>
+        </div>
+      )}
+    </Screen></PhoneShell>
   );
 }
 
@@ -351,15 +602,241 @@ function Skill({ go }) {
   );
 }
 
-function Dashboard({ go = () => {}, mini = false, onFabClick }) {
+function Dashboard({ go = () => {}, mini = false, onFabClick, appliedJobs = [], savedJobs = [], onSaveJob = () => {}, onApplyJob = () => {}, noNav = false, dashboardFilter = "all", setDashboardFilter }) {
+  const [bannerIndex, setBannerIndex] = useState(0);
+  const [progressKey, setProgressKey] = useState(0);
+  const BANNER_DURATION = 3000;
+
+  const banners = [
+    { title: "Resume Score", value: "78/100", desc: "Your ATS score is strong. 6 improvements found.", color: "from-blue-500 to-blue-600", icon: BarChart3 },
+    { title: "Job Matches", value: "47", desc: "New roles matching your skills are available today.", color: "from-purple-500 to-purple-600", icon: Briefcase },
+    { title: "Skill Gap", value: "3 skills", desc: "TypeScript, A/B Testing & SQL are trending in your field.", color: "from-emerald-500 to-emerald-600", icon: Sparkles },
+  ];
+
+  const filters = [
+    { key: "all", label: "All", icon: Filter },
+    { key: "recent", label: "Recent", icon: Clock },
+    { key: "saved", label: "Saved", icon: Bookmark },
+    { key: "applied", label: "Applied", icon: CheckCircle2 },
+  ];
+
+  const filteredJobs = jobs.filter((job) => {
+    if (dashboardFilter === "saved") return savedJobs.includes(job.id);
+    if (dashboardFilter === "applied") return appliedJobs.includes(job.id);
+    if (dashboardFilter === "recent") return true;
+    return true;
+  });
+
+  // Auto-advance banners — resets on any manual interaction via progressKey
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setBannerIndex((prev) => (prev + 1) % banners.length);
+      setProgressKey((k) => k + 1);
+    }, BANNER_DURATION);
+    return () => clearInterval(timer);
+  }, [banners.length, progressKey]);
+
+  const goToBanner = (i) => {
+    setBannerIndex(i);
+    setProgressKey((k) => k + 1);
+  };
+
+  // Touch / swipe handling
+  const touchRef = useRef({ startX: 0, startY: 0, dragging: false });
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const onTouchStart = (e) => {
+    touchRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, dragging: true };
+    setIsDragging(true);
+  };
+  const onTouchMove = (e) => {
+    if (!touchRef.current.dragging) return;
+    const dx = e.touches[0].clientX - touchRef.current.startX;
+    setDragOffset(dx);
+  };
+  const onTouchEnd = () => {
+    touchRef.current.dragging = false;
+    const threshold = 50;
+    if (dragOffset < -threshold && bannerIndex < banners.length - 1) {
+      goToBanner(bannerIndex + 1);
+    } else if (dragOffset > threshold && bannerIndex > 0) {
+      goToBanner(bannerIndex - 1);
+    } else {
+      setProgressKey((k) => k + 1); // reset timer even on no-change swipe
+    }
+    setDragOffset(0);
+    setIsDragging(false);
+  };
+
+  const onBannerTap = (e) => {
+    if (Math.abs(dragOffset) > 5) return; // was a swipe, not a tap
+    const rect = e.currentTarget.getBoundingClientRect();
+    const tapX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+    if (tapX < rect.left + rect.width / 2) {
+      // Tap left half → previous
+      if (bannerIndex > 0) goToBanner(bannerIndex - 1);
+    } else {
+      // Tap right half → next
+      goToBanner((bannerIndex + 1) % banners.length);
+    }
+  };
+
   return (
-    <Screen nav={!mini} go={go} activeTab="home" onFabClick={onFabClick}>
+    <Screen nav={!mini && !noNav} floatingNav={noNav} go={go} activeTab="home" onFabClick={onFabClick}>
+      {/* Header with profile + notification */}
       <Header title="Good morning, Chris" subtitle="Your AI agent is ready" icon={<GlassIcon className="h-12 w-12 rounded-2xl"><span className="text-2xl">🪙</span></GlassIcon>} action={<button className={`grid h-12 w-12 place-items-center rounded-2xl border border-white/60 bg-white/35 text-slate-700 ${neoOut}`}><Bell className="h-5 w-5" /></button>} />
-      <div className={`mb-5 flex items-center gap-3 rounded-2xl border border-white/60 bg-white/25 px-4 py-4 text-sm text-slate-400 ${neoIn} backdrop-blur-xl`}><Search className="h-5 w-5" /> Search roles, companies...</div>
-      <Card className="mb-4"><div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold text-slate-900">Analyzing resume</h3><p className="mt-1 text-sm text-slate-600">5 strong job matches are ready.</p></div><StepPill>78/100</StepPill></div><div className="mt-4 grid grid-cols-3 gap-3 text-center">{[["47", "Matches"], ["12", "Applied"], ["8", "Saved"]].map(([n, l]) => <div key={l} className={`rounded-2xl bg-white/25 p-3 ${neoIn}`}><p className="font-semibold">{n}</p><p className="text-[11px] text-slate-500">{l}</p></div>)}</div></Card>
-      <Card className="mb-5"><div className="flex items-start gap-3"><div className={`grid h-11 w-11 place-items-center rounded-2xl bg-blue-100/60 text-blue-600 ${neoIn}`}><Bot className="h-5 w-5" /></div><div><h3 className="font-semibold text-slate-900">AI recommendation</h3><p className="mt-1 text-sm leading-6 text-slate-600">Start a focused job search for junior UX and frontend roles using your improved resume.</p></div></div></Card>
-      <div className="grid grid-cols-2 gap-3">{[["Build Resume", FileText, "builder"], ["Analyze Resume", BarChart3, "analysis"], ["Find Jobs", Search, "jobSetup"], ["Skill Gap", Sparkles, "skill"], ["Tracker", ClipboardList, "tracker"], ["Profile Vault", User, "profile"]].map(([label, Icon, target]) => <button key={label} onClick={() => go(target)} className={`min-h-[108px] rounded-3xl border border-white/60 bg-white/30 p-4 text-left ${neoOut} backdrop-blur-xl transition hover:bg-white/40`}><Icon className="mb-4 h-5 w-5 text-blue-600" /><span className="text-sm font-semibold text-slate-800">{label}</span></button>)}</div>
-      {!mini && <div className="mt-5"><PrimaryButton onClick={() => go("jobSetup")}>Start AI Job Search <ArrowRight className="h-4 w-4" /></PrimaryButton></div>}
+
+      {/* Story-style Summary Banners */}
+      <div className="relative mb-4">
+        {/* Progress bars — Instagram story style */}
+        <div className="mb-2 flex gap-1">
+          {banners.map((_, i) => (
+            <button key={i} onClick={() => goToBanner(i)} className="relative h-[3px] flex-1 overflow-hidden rounded-full bg-slate-300/50">
+              <div
+                key={`${i}-${progressKey}`}
+                className="absolute inset-y-0 left-0 rounded-full bg-blue-500"
+                style={
+                  i < bannerIndex
+                    ? { width: "100%", transition: "none" }
+                    : i === bannerIndex
+                    ? { width: "100%", transition: `width ${BANNER_DURATION}ms linear`, animationDelay: "0ms" }
+                    : { width: "0%", transition: "none" }
+                }
+                ref={(el) => {
+                  if (el && i === bannerIndex) {
+                    el.style.width = "0%";
+                    requestAnimationFrame(() => { el.style.width = "100%"; });
+                  }
+                }}
+              />
+            </button>
+          ))}
+        </div>
+
+        {/* Banner carousel with smooth slide + drag support */}
+        <div
+          className="overflow-hidden rounded-2xl"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={(e) => { onTouchEnd(); onBannerTap(e); }}
+          onClick={onBannerTap}
+        >
+          <div
+            className="flex"
+            style={{
+              transform: `translateX(calc(-${bannerIndex * 100}% + ${dragOffset}px))`,
+              transition: isDragging ? "none" : "transform 500ms cubic-bezier(0.22, 1, 0.36, 1)",
+            }}
+          >
+            {banners.map((b, i) => {
+              const BIcon = b.icon;
+              return (
+                <div key={i} className={`flex min-w-full items-center gap-3 bg-gradient-to-r ${b.color} px-3.5 py-2.5 text-white`}>
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/20 backdrop-blur-sm">
+                    <BIcon className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xs font-semibold">{b.title}</h3>
+                      <span className="rounded-full bg-white/25 px-1.5 py-0.5 text-[10px] font-bold leading-none">{b.value}</span>
+                    </div>
+                    <p className="mt-0.5 text-[11px] leading-4 text-white/85">{b.desc}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Filter tabs */}
+      <div className="mb-4 flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+        {filters.map((f) => {
+          const FIcon = f.icon;
+          const active = dashboardFilter === f.key;
+          const count = f.key === "applied" ? appliedJobs.length : f.key === "saved" ? savedJobs.length : null;
+          return (
+            <button key={f.key} onClick={() => setDashboardFilter(f.key)} className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold transition ${active ? "bg-blue-600 text-white shadow-[6px_6px_14px_rgba(37,99,235,0.30)]" : `border border-white/60 bg-white/35 text-slate-700 ${neoOut}`}`}>
+              <FIcon className="h-3.5 w-3.5" />
+              {f.label}
+              {count !== null && count > 0 && <span className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${active ? "bg-white/25" : "bg-blue-100 text-blue-600"}`}>{count}</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Job cards */}
+      {filteredJobs.length === 0 ? (
+        <Card className="py-10 text-center">
+          <div className={`mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-blue-100/60 text-blue-500 ${neoIn}`}>
+            {dashboardFilter === "saved" ? <Bookmark className="h-6 w-6" /> : dashboardFilter === "applied" ? <CheckCircle2 className="h-6 w-6" /> : <Briefcase className="h-6 w-6" />}
+          </div>
+          <h3 className="font-semibold text-slate-800">No {dashboardFilter} jobs yet</h3>
+          <p className="mt-2 text-sm text-slate-500">{dashboardFilter === "saved" ? "Save jobs you're interested in to view them here." : dashboardFilter === "applied" ? "Jobs you apply to will appear here." : "No jobs found."}</p>
+        </Card>
+      ) : (
+        filteredJobs.map((job) => {
+          const isApplied = appliedJobs.includes(job.id);
+          const isSaved = savedJobs.includes(job.id);
+          return (
+            <Card key={job.id} className="mb-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex gap-3">
+                  <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-blue-100/60 text-sm font-semibold text-blue-700 ${neoIn}`}>{job.company[0]}</div>
+                  <div>
+                    <h3 className="font-semibold text-slate-900">{job.company}</h3>
+                    <p className="text-sm text-slate-700">{job.title}</p>
+                    <p className="mt-1 flex items-center gap-1 text-xs text-slate-500"><MapPin className="h-3 w-3" /> {job.location}</p>
+                  </div>
+                </div>
+                {isApplied ? (
+                  <span className="rounded-full bg-blue-100/80 px-3 py-1 text-xs font-semibold text-blue-600">Applied</span>
+                ) : (
+                  <span className="rounded-full bg-emerald-100/80 px-3 py-1 text-xs font-semibold text-emerald-600">{job.match}% match</span>
+                )}
+              </div>
+
+              {isApplied ? (
+                <>
+                  <div className={`mt-3 rounded-2xl bg-white/30 p-3 text-sm text-slate-600 ${neoIn}`}>
+                    <p><b className="text-slate-800">Resume:</b> Job-tailored Resume v3</p>
+                    <p><b className="text-slate-800">Applied:</b> Today</p>
+                    <p><b className="text-slate-800">Status:</b> Under Review</p>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <StepPill>{job.type}</StepPill>
+                    <StepPill>{job.salary}</StepPill>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="mt-3 text-sm leading-6 text-slate-600">{job.why}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <StepPill>{job.type}</StepPill>
+                    <StepPill>{job.salary}</StepPill>
+                    <StepPill>Missing: {job.missing[0]}</StepPill>
+                  </div>
+                  <div className="mt-4 grid grid-cols-3 gap-2">
+                    <button onClick={() => go("detail", job)} className="rounded-xl bg-blue-600 py-2 text-xs font-semibold text-white shadow-[6px_6px_14px_rgba(37,99,235,0.25)]">Details</button>
+                    <button onClick={() => onSaveJob(job.id)} className={`rounded-xl py-2 text-xs font-semibold ${isSaved ? `bg-blue-100/60 text-blue-600 ${neoIn}` : `bg-white/30 text-slate-700 ${neoOut}`}`}>{isSaved ? "Saved ✓" : "Save"}</button>
+                    <button onClick={() => go("tailor", job)} className={`rounded-xl bg-white/30 py-2 text-xs font-semibold text-slate-700 ${neoOut}`}>Apply</button>
+                  </div>
+                </>
+              )}
+            </Card>
+          );
+        })
+      )}
+      {/* Floating Chatbot FAB */}
+      {!mini && (
+        <button
+          onClick={() => go("aiChatbot", null, "chatOpen")}
+          className="fixed bottom-[120px] right-8 z-40 grid h-14 w-14 place-items-center rounded-full border border-blue-300/30 bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-[8px_8px_22px_rgba(37,99,235,0.40),-4px_-4px_12px_rgba(255,255,255,0.25)] transition hover:scale-105 hover:shadow-[10px_10px_28px_rgba(37,99,235,0.50)] active:scale-95"
+        >
+          <Bot className="h-6 w-6" />
+        </button>
+      )}
     </Screen>
   );
 }
@@ -401,7 +878,7 @@ function Results({ go }) {
 
 function Detail({ go, selectedJob }) {
   const job = selectedJob || jobs[0];
-  return <PhoneShell><Screen><Header title={job.title} subtitle={job.company} icon={<GlassIcon className="h-12 w-12 rounded-2xl"><Briefcase className="h-6 w-6 text-blue-600" /></GlassIcon>} /><Card><div className="flex items-center justify-between"><h3 className="font-semibold text-slate-900">Match analysis</h3><span className="rounded-full bg-emerald-100/80 px-3 py-1 text-xs font-semibold text-emerald-600">{job.match}%</span></div><p className="mt-3 text-sm leading-6 text-slate-600">{job.why}</p></Card><Card className="mt-4"><h3 className="font-semibold text-slate-900">Requirement checklist</h3><div className="mt-3 space-y-3">{["Resume includes relevant projects", "Location and job type match", "Strong design/coding keywords", ...job.missing.map((m) => `Needs improvement: ${m}`)].map((r, i) => <div key={r} className="flex items-center gap-2 text-sm text-slate-700"><CheckCircle2 className={`h-4 w-4 ${i < 3 ? "text-emerald-500" : "text-amber-500"}`} />{r}</div>)}</div></Card><Card className="mt-4"><h3 className="font-semibold text-slate-900">Recommended resume changes</h3><p className="mt-2 text-sm leading-6 text-slate-600">Add role-specific keywords, strengthen project impact, and rewrite one bullet to show measurable results.</p></Card><div className="mt-6 space-y-3"><PrimaryButton onClick={() => go("tailor", job)}>Tailor Resume for This Job</PrimaryButton><SecondaryButton onClick={() => go("review", job)}>Apply with Current Resume</SecondaryButton><SecondaryButton>Save Job</SecondaryButton><button onClick={() => go("results")} className="w-full py-2 text-sm text-slate-600">Back to Results</button></div></Screen></PhoneShell>;
+  return <PhoneShell><Screen><Header title={job.title} subtitle={job.company} icon={<GlassIcon className="h-12 w-12 rounded-2xl"><Briefcase className="h-6 w-6 text-blue-600" /></GlassIcon>} /><Card><div className="flex items-center justify-between"><h3 className="font-semibold text-slate-900">Match analysis</h3><span className="rounded-full bg-emerald-100/80 px-3 py-1 text-xs font-semibold text-emerald-600">{job.match}%</span></div><p className="mt-3 text-sm leading-6 text-slate-600">{job.why}</p></Card><Card className="mt-4"><h3 className="font-semibold text-slate-900">Requirement checklist</h3><div className="mt-3 space-y-3">{["Resume includes relevant projects", "Location and job type match", "Strong design/coding keywords", ...job.missing.map((m) => `Needs improvement: ${m}`)].map((r, i) => <div key={r} className="flex items-center gap-2 text-sm text-slate-700"><CheckCircle2 className={`h-4 w-4 ${i < 3 ? "text-emerald-500" : "text-amber-500"}`} />{r}</div>)}</div></Card><Card className="mt-4"><h3 className="font-semibold text-slate-900">Recommended resume changes</h3><p className="mt-2 text-sm leading-6 text-slate-600">Add role-specific keywords, strengthen project impact, and rewrite one bullet to show measurable results.</p></Card><div className="mt-6 space-y-3"><PrimaryButton onClick={() => go("tailor", job)}>Tailor Resume for This Job</PrimaryButton><SecondaryButton onClick={() => go("review", job)}>Apply with Current Resume</SecondaryButton><SecondaryButton>Save Job</SecondaryButton><button onClick={() => go("dashboard")} className="w-full py-2 text-sm text-slate-600">Back to Home</button></div></Screen></PhoneShell>;
 }
 
 function Tailor({ go, selectedJob }) {
@@ -411,12 +888,13 @@ function Tailor({ go, selectedJob }) {
 
 function Review({ go, selectedJob }) {
   const job = selectedJob || jobs[0];
-  return <PhoneShell><Screen><Header title="Review Application" subtitle="You are always in control" icon={<GlassIcon className="h-12 w-12 rounded-2xl"><ShieldCheck className="h-6 w-6 text-blue-600" /></GlassIcon>} /><Card><h3 className="font-semibold text-slate-900">{job.company}</h3><p className="mt-1 text-sm text-slate-600">{job.title} · {job.location}</p><div className={`mt-4 rounded-2xl bg-blue-50/45 p-3 text-sm text-blue-800 ${neoIn}`}>Review carefully before submitting. You are always in control.</div></Card><Card className="mt-4"><h3 className="font-semibold text-slate-900">Selected resume</h3><p className="mt-2 text-sm text-slate-600">Job-tailored Resume v3 · ATS optimized</p></Card><Card className="mt-4"><h3 className="font-semibold text-slate-900">Cover letter preview</h3><p className="mt-2 text-sm leading-6 text-slate-600">Dear hiring team, I&apos;m excited to apply because this role matches my UX, frontend, and AI product interests...</p></Card><Card className="mt-4"><h3 className="font-semibold text-slate-900">Autofill information</h3><p className="mt-2 text-sm text-slate-600">Name, email, portfolio link, education, work authorization.</p></Card><div className="mt-6 space-y-3"><PrimaryButton onClick={() => go("submitted", job)}>Approve & Auto Apply</PrimaryButton><SecondaryButton>Edit Application</SecondaryButton><button onClick={() => go("results")} className="w-full py-2 text-sm text-slate-600">Cancel</button></div></Screen></PhoneShell>;
+  return <PhoneShell><Screen><Header title="Review Application" subtitle="You are always in control" icon={<GlassIcon className="h-12 w-12 rounded-2xl"><ShieldCheck className="h-6 w-6 text-blue-600" /></GlassIcon>} /><Card><h3 className="font-semibold text-slate-900">{job.company}</h3><p className="mt-1 text-sm text-slate-600">{job.title} · {job.location}</p><div className={`mt-4 rounded-2xl bg-blue-50/45 p-3 text-sm text-blue-800 ${neoIn}`}>Review carefully before submitting. You are always in control.</div></Card><Card className="mt-4"><h3 className="font-semibold text-slate-900">Selected resume</h3><p className="mt-2 text-sm text-slate-600">Job-tailored Resume v3 · ATS optimized</p></Card><Card className="mt-4"><h3 className="font-semibold text-slate-900">Cover letter preview</h3><p className="mt-2 text-sm leading-6 text-slate-600">Dear hiring team, I&apos;m excited to apply because this role matches my UX, frontend, and AI product interests...</p></Card><Card className="mt-4"><h3 className="font-semibold text-slate-900">Autofill information</h3><p className="mt-2 text-sm text-slate-600">Name, email, portfolio link, education, work authorization.</p></Card><div className="mt-6 space-y-3"><PrimaryButton onClick={() => go("submitted", job)}>Approve & Auto Apply</PrimaryButton><SecondaryButton>Edit Application</SecondaryButton><button onClick={() => go("dashboard")} className="w-full py-2 text-sm text-slate-600">Cancel</button></div></Screen></PhoneShell>;
 }
 
-function Submitted({ go, selectedJob }) {
+function Submitted({ go, selectedJob, onApply = () => {} }) {
   const job = selectedJob || jobs[0];
-  return <PhoneShell><Screen><div className="flex min-h-[610px] flex-col justify-center"><Card className="text-center"><div className={`mx-auto mb-5 grid h-24 w-24 place-items-center rounded-full bg-emerald-100/70 text-emerald-600 ${neoOut}`}><CheckCircle2 className="h-12 w-12" /></div><h1 className="text-xl font-semibold text-slate-900">Application submitted</h1><p className="mt-3 text-sm leading-6 text-slate-600">{job.company} · {job.title}</p><div className={`mt-4 rounded-2xl bg-white/30 p-4 text-left text-sm text-slate-600 ${neoIn}`}><p><b className="text-slate-800">Resume:</b> Job-tailored Resume v3</p><p><b className="text-slate-800">Submitted:</b> Today, 3:48 AM</p></div><div className="mt-6 space-y-3"><PrimaryButton onClick={() => go("tracker")}>Track Application</PrimaryButton><SecondaryButton onClick={() => go("results")}>Apply to Next Job</SecondaryButton><SecondaryButton onClick={() => go("dashboard")}>Back to Dashboard</SecondaryButton></div></Card></div></Screen></PhoneShell>;
+  useEffect(() => { onApply(job.id); }, [job.id]);
+  return <PhoneShell><Screen><div className="flex min-h-[610px] flex-col justify-center"><Card className="text-center"><div className={`mx-auto mb-5 grid h-24 w-24 place-items-center rounded-full bg-emerald-100/70 text-emerald-600 ${neoOut}`}><CheckCircle2 className="h-12 w-12" /></div><h1 className="text-xl font-semibold text-slate-900">Application submitted</h1><p className="mt-3 text-sm leading-6 text-slate-600">{job.company} · {job.title}</p><div className={`mt-4 rounded-2xl bg-white/30 p-4 text-left text-sm text-slate-600 ${neoIn}`}><p><b className="text-slate-800">Resume:</b> Job-tailored Resume v3</p><p><b className="text-slate-800">Submitted:</b> Today</p></div><div className="mt-6 space-y-3"><PrimaryButton onClick={() => go("dashboard")}>Back to Home</PrimaryButton><SecondaryButton onClick={() => go("dashboard")}>Browse More Jobs</SecondaryButton></div></Card></div></Screen></PhoneShell>;
 }
 
 function Tracker({ go }) {
@@ -424,9 +902,146 @@ function Tracker({ go }) {
   return <PhoneShell><Screen nav go={go} activeTab="jobs"><Header title="Application Tracker" subtitle="Track every opportunity" icon={<GlassIcon className="h-12 w-12 rounded-2xl"><ClipboardList className="h-6 w-6 text-blue-600" /></GlassIcon>} /><div className="mb-4 flex gap-2 overflow-x-auto pb-2">{statuses.map((s) => <button key={s} className={`shrink-0 rounded-full border border-white/60 bg-white/35 px-4 py-2 text-xs font-semibold text-slate-700 ${neoOut}`}>{s}</button>)}</div><div className="space-y-3">{applications.map((a) => <Card key={a.company}><div className="flex items-start justify-between"><div><h3 className="font-semibold text-slate-900">{a.company}</h3><p className="text-sm text-slate-600">{a.role}</p></div><StepPill>{a.status}</StepPill></div><p className="mt-3 text-xs text-slate-500">Applied {a.date} · {a.resume}</p><div className="mt-4 grid grid-cols-3 gap-2"><button className={`rounded-xl bg-white/30 py-2 text-xs font-semibold ${neoOut}`}>Update</button><button className="rounded-xl bg-blue-600 py-2 text-xs font-semibold text-white shadow-[6px_6px_14px_rgba(37,99,235,0.25)]">Interview</button><button className={`rounded-xl bg-white/30 py-2 text-xs font-semibold ${neoOut}`}>Resume</button></div></Card>)}</div></Screen></PhoneShell>;
 }
 
-function Profile({ go }) {
-  const rows = [[FileText, "My resumes", "2"], [Bookmark, "Saved roles", "12"], [Bell, "Notifications", "On"], [Settings, "Settings", ""], [HelpCircle, "Help & support", ""]];
-  return <PhoneShell><Screen nav go={go} activeTab="profile"><h1 className="mb-6 text-xl font-semibold text-slate-900">Profile</h1><Card className="mb-5 text-center"><div className="mx-auto mb-4"><GlassIcon><span className="text-4xl">🪙</span></GlassIcon></div><h2 className="font-semibold text-slate-900">Chris Anderson</h2><p className="text-sm text-slate-500">chris@syncra.app</p><div className="mt-5 grid grid-cols-3 gap-3">{[["47", "Matches"], ["12", "Applied"], ["8", "Saved"]].map(([n, l]) => <div key={l} className={`rounded-2xl bg-white/25 p-3 ${neoIn}`}><p className="font-semibold">{n}</p><p className="text-[11px] text-slate-500">{l}</p></div>)}</div></Card><div className="space-y-3">{rows.map(([Icon, label, value]) => <button key={label} className={`flex w-full items-center gap-4 rounded-3xl border border-white/60 bg-white/30 p-4 text-left ${neoOut} backdrop-blur-xl`}><div className={`grid h-11 w-11 place-items-center rounded-2xl bg-blue-100/60 text-slate-700 ${neoIn}`}><Icon className="h-5 w-5" /></div><span className="flex-1 text-sm font-semibold text-slate-800">{label}</span><span className="text-xs text-slate-500">{value}</span><ChevronRight className="h-4 w-4 text-slate-400" /></button>)}<button className={`flex w-full items-center justify-center gap-2 rounded-3xl border border-white/60 bg-white/30 p-4 text-sm font-semibold text-slate-700 ${neoOut}`}><LogOut className="h-4 w-4" /> Log out</button></div></Screen></PhoneShell>;
+function Profile({ go, noNav = false, appliedCount, savedCount, jobsCount }) {
+  const accountRows = [
+    { icon: Settings, label: "Account Settings" },
+  ];
+  
+  const preferenceRows = [
+    { icon: Bell, label: "Notifications" },
+    { icon: ShieldCheck, label: "Permissions" },
+    { icon: Palette, label: "Appearance" },
+  ];
+
+  const resourceRows = [
+    { icon: HelpCircle, label: "Contact Support", color: "bg-blue-500" },
+  ];
+
+  return (
+    <PhoneShell>
+      <Screen nav={!noNav} floatingNav={noNav} go={go} activeTab="profile">
+        {/* Header matching the screenshot */}
+        <div className="mb-6 flex items-center justify-between">
+           <button onClick={() => go("dashboard")} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/30 text-slate-800 transition hover:bg-white/50">
+              <ChevronLeft className="h-5 w-5" />
+           </button>
+           <h1 className="text-lg font-semibold text-slate-900">Settings</h1>
+           <div className="w-10" /> {/* Spacer for centering */}
+        </div>
+
+        {/* Profile Card */}
+        <div className={`mb-6 overflow-hidden rounded-[1.25rem] bg-white/40 ${neoOut}`}>
+          <div className="flex items-center gap-4 p-4">
+            <div className="grid h-14 w-14 place-items-center rounded-full bg-blue-100 text-blue-600">
+              <span className="text-2xl">🪙</span>
+            </div>
+            <div>
+              <h2 className="font-semibold text-slate-900">Chris Anderson</h2>
+              <p className="text-sm text-slate-500">@chrisanderson</p>
+            </div>
+            <ChevronRight className="ml-auto h-5 w-5 text-slate-400" />
+          </div>
+          <div className="h-px w-full bg-white/40" />
+          <button className="flex w-full items-center justify-between p-4 text-sm font-medium text-slate-700 hover:bg-white/20 transition-colors">
+            Edit Profile
+            <ChevronRight className="h-4 w-4 text-slate-400" />
+          </button>
+        </div>
+
+        {/* Career Overview (replaces Matches, Saved, Applied) */}
+        <h3 className="mb-2 ml-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Career</h3>
+        <div className={`mb-6 overflow-hidden rounded-[1.25rem] bg-white/40 ${neoOut}`}>
+          <button onClick={() => go("dashboard", null, null, "all")} className="flex w-full items-center justify-between p-4 hover:bg-white/20 transition-colors">
+             <div className="flex items-center gap-3">
+                <div className="grid h-8 w-8 place-items-center rounded-lg bg-blue-500 text-white shadow-sm"><Briefcase className="h-4 w-4" /></div>
+                <span className="text-sm font-medium text-slate-700">Matches</span>
+             </div>
+             <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-500">{jobsCount}</span>
+                <ChevronRight className="h-4 w-4 text-slate-400" />
+             </div>
+          </button>
+          <div className="h-px w-full bg-white/40" />
+          <button onClick={() => go("dashboard", null, null, "saved")} className="flex w-full items-center justify-between p-4 hover:bg-white/20 transition-colors">
+             <div className="flex items-center gap-3">
+                <div className="grid h-8 w-8 place-items-center rounded-lg bg-orange-500 text-white shadow-sm"><Bookmark className="h-4 w-4" /></div>
+                <span className="text-sm font-medium text-slate-700">Saved Roles</span>
+             </div>
+             <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-500">{savedCount}</span>
+                <ChevronRight className="h-4 w-4 text-slate-400" />
+             </div>
+          </button>
+          <div className="h-px w-full bg-white/40" />
+          <button onClick={() => go("dashboard", null, null, "applied")} className="flex w-full items-center justify-between p-4 hover:bg-white/20 transition-colors">
+             <div className="flex items-center gap-3">
+                <div className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500 text-white shadow-sm"><CheckCircle2 className="h-4 w-4" /></div>
+                <span className="text-sm font-medium text-slate-700">Applied</span>
+             </div>
+             <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-500">{appliedCount}</span>
+                <ChevronRight className="h-4 w-4 text-slate-400" />
+             </div>
+          </button>
+        </div>
+
+        {/* Account & Payment */}
+        <div className={`mb-6 overflow-hidden rounded-[1.25rem] bg-white/40 ${neoOut}`}>
+          {accountRows.map((row, i) => (
+             <div key={row.label}>
+                <button className="flex w-full items-center justify-between p-4 hover:bg-white/20 transition-colors">
+                   <div className="flex items-center gap-3">
+                      <div className="grid h-8 w-8 place-items-center rounded-lg bg-slate-400 text-white shadow-sm"><row.icon className="h-4 w-4" /></div>
+                      <span className="text-sm font-medium text-slate-700">{row.label}</span>
+                   </div>
+                   <ChevronRight className="h-4 w-4 text-slate-400" />
+                </button>
+                {i < accountRows.length - 1 && <div className="ml-14 h-px bg-white/40" />}
+             </div>
+          ))}
+        </div>
+
+        {/* Preferences */}
+        <h3 className="mb-2 ml-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Preferences</h3>
+        <div className={`mb-6 overflow-hidden rounded-[1.25rem] bg-white/40 ${neoOut}`}>
+          {preferenceRows.map((row, i) => (
+             <div key={row.label}>
+                <button className="flex w-full items-center justify-between p-4 hover:bg-white/20 transition-colors">
+                   <div className="flex items-center gap-3">
+                      <div className={`grid h-8 w-8 place-items-center rounded-lg text-white shadow-sm ${row.icon === Bell ? 'bg-rose-500' : row.icon === ShieldCheck ? 'bg-emerald-500' : 'bg-pink-500'}`}><row.icon className="h-4 w-4" /></div>
+                      <span className="text-sm font-medium text-slate-700">{row.label}</span>
+                   </div>
+                   <ChevronRight className="h-4 w-4 text-slate-400" />
+                </button>
+                {i < preferenceRows.length - 1 && <div className="ml-14 h-px bg-white/40" />}
+             </div>
+          ))}
+        </div>
+
+        {/* Resources */}
+        <h3 className="mb-2 ml-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Resources</h3>
+        <div className={`mb-6 overflow-hidden rounded-[1.25rem] bg-white/40 ${neoOut}`}>
+          {resourceRows.map((row, i) => (
+             <div key={row.label}>
+                <button className="flex w-full items-center justify-between p-4 hover:bg-white/20 transition-colors">
+                   <div className="flex items-center gap-3">
+                      <div className={`grid h-8 w-8 place-items-center rounded-lg text-white shadow-sm ${row.color}`}><row.icon className="h-4 w-4" /></div>
+                      <span className="text-sm font-medium text-slate-700">{row.label}</span>
+                   </div>
+                   <ChevronRight className="h-4 w-4 text-slate-400" />
+                </button>
+                {i < resourceRows.length - 1 && <div className="ml-14 h-px bg-white/40" />}
+             </div>
+          ))}
+        </div>
+
+        {/* Sign out */}
+        <button className={`mb-4 flex w-full items-center justify-center gap-2 rounded-[1.25rem] bg-white/40 p-4 text-sm font-semibold text-red-500 ${neoOut} transition-colors hover:bg-red-50`}>
+          <LogOut className="h-5 w-5" /> Sign Out
+        </button>
+      </Screen>
+    </PhoneShell>
+  );
 }
 
 function QuickStartModal({ close, go }) {
@@ -519,10 +1134,26 @@ export default function App() {
   const [selectedJob, setSelectedJob] = useState(jobs[0]);
   const [modal, setModal] = useState(false);
   const [viewMode, setViewMode] = useState("mobile");
+  const [chatMode, setChatMode] = useState("setPreferences");
+  const [appliedJobs, setAppliedJobs] = useState([]);
+  const [savedJobs, setSavedJobs] = useState([]);
+  const [hasReachedDashboard, setHasReachedDashboard] = useState(false);
+  const [dashboardFilter, setDashboardFilter] = useState("all");
 
-  const go = (next, job) => {
+  const handleSaveJob = (jobId) => {
+    setSavedJobs((prev) => prev.includes(jobId) ? prev.filter((id) => id !== jobId) : [...prev, jobId]);
+  };
+
+  const handleApplyJob = (jobId) => {
+    setAppliedJobs((prev) => prev.includes(jobId) ? prev : [...prev, jobId]);
+  };
+
+  const go = (next, job, mode, filterParam) => {
     if (job) setSelectedJob(job);
+    if (mode) setChatMode(mode);
+    if (filterParam) setDashboardFilter(filterParam);
     if (next === "builder") setModal(false);
+    if (next === "dashboard") setHasReachedDashboard(true);
     setScreen(next);
   };
 
@@ -530,13 +1161,15 @@ export default function App() {
     switch (screen) {
       case "landing": return <Landing go={go} />;
       case "login": return <Login go={go} />;
+      case "resumeUpload": return <ResumeUpload go={go} fromDashboard={hasReachedDashboard} />;
+      case "aiChatbot": return <AIChatbot go={go} chatMode={chatMode} fromDashboard={hasReachedDashboard} />;
       case "setup": return <Setup go={go} />;
       case "resumeInput": return <ResumeInput go={go} />;
       case "story": return <Story go={go} />;
       case "builder": return <Builder go={go} />;
       case "analysis": return <Analysis go={go} />;
       case "skill": return <Skill go={go} />;
-      case "dashboard": return <PhoneShell><div className="relative h-full min-h-0 overflow-hidden"><Dashboard go={(next) => next === "builder" ? setModal(true) : go(next)} onFabClick={() => setModal(true)} />{modal && <QuickStartModal close={() => setModal(false)} go={go} />}</div></PhoneShell>;
+      case "dashboard": return <Dashboard go={go} appliedJobs={appliedJobs} savedJobs={savedJobs} onSaveJob={handleSaveJob} onApplyJob={handleApplyJob} noNav dashboardFilter={dashboardFilter} setDashboardFilter={setDashboardFilter} />;
       case "jobSetup": return <JobSetup go={go} />;
       case "running": return <Running go={go} />;
       case "complete": return <Complete go={go} />;
@@ -544,14 +1177,17 @@ export default function App() {
       case "detail": return <Detail go={go} selectedJob={selectedJob} />;
       case "tailor": return <Tailor go={go} selectedJob={selectedJob} />;
       case "review": return <Review go={go} selectedJob={selectedJob} />;
-      case "submitted": return <Submitted go={go} selectedJob={selectedJob} />;
-      case "tracker": return <Tracker go={go} />;
-      case "profile": return <Profile go={go} />;
+      case "submitted": return <Submitted go={go} selectedJob={selectedJob} onApply={handleApplyJob} />;
+      case "tracker": return <Profile go={go} noNav appliedCount={appliedJobs.length} savedCount={savedJobs.length} jobsCount={jobs.length} />;
+      case "profile": return <Profile go={go} noNav appliedCount={appliedJobs.length} savedCount={savedJobs.length} jobsCount={jobs.length} />;
       default: return <Landing go={go} />;
     }
-  }, [screen, selectedJob, modal, viewMode]);
+  }, [screen, selectedJob, modal, viewMode, chatMode, appliedJobs, savedJobs, hasReachedDashboard, dashboardFilter]);
 
   const insideAppTransition = screen !== "landing";
+  const tabbedScreens = ["dashboard", "profile", "tracker"];
+  const isTabbed = tabbedScreens.includes(screen);
+  const activeTab = screen === "profile" || screen === "tracker" ? "profile" : "home";
 
   return (
     <ViewModeContext.Provider value={viewMode}>
@@ -584,19 +1220,18 @@ export default function App() {
         {insideAppTransition ? (
           <PhoneShell>
             <ShellStripContext.Provider value={true}>
-              <div className="relative h-full min-h-0 overflow-hidden">
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.div
-                    key={screen}
-                    className="absolute inset-0 h-full min-h-0"
-                    initial={{ opacity: 0, x: 22, scale: 0.985, filter: "blur(7px)" }}
-                    animate={{ opacity: 1, x: 0, scale: 1, filter: "blur(0px)" }}
-                    exit={{ opacity: 0, x: -18, scale: 0.985, filter: "blur(7px)" }}
-                    transition={{ duration: 0.46, ease: [0.22, 1, 0.36, 1] }}
-                  >
+              <div className="relative flex h-full min-h-0 flex-1 flex-col">
+                <div className="relative min-h-0 flex-1 overflow-hidden">
+                  <div className="absolute inset-0 h-full min-h-0">
                     {component}
-                  </motion.div>
-                </AnimatePresence>
+                  </div>
+                </div>
+                {/* Persistent floating nav bar for tabbed screens */}
+                {isTabbed && (
+                  <div className="absolute bottom-6 left-6 right-6 z-40">
+                    <BottomNav go={go} activeTab={activeTab} />
+                  </div>
+                )}
               </div>
             </ShellStripContext.Provider>
           </PhoneShell>
