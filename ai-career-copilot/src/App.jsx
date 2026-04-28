@@ -97,6 +97,33 @@ const isResumeFile = (file) => {
   return name.endsWith(".pdf") || name.endsWith(".doc") || name.endsWith(".docx");
 };
 
+const isPdfResume = (item) => {
+  const name = item?.name?.toLowerCase?.() || "";
+  return item?.type === "application/pdf" || name.endsWith(".pdf");
+};
+
+const formatFileSize = (size) => {
+  const bytes = Number(size);
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 KB";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const formatUploadDate = (value) => {
+  if (!value) return "just now";
+
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "just now";
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+};
+
 const neoOut = "shadow-[12px_12px_28px_rgba(59,130,246,0.16),-12px_-12px_28px_rgba(255,255,255,0.78),inset_1px_1px_0_rgba(255,255,255,0.72)]";
 const neoIn = "shadow-[inset_6px_6px_14px_rgba(59,130,246,0.14),inset_-6px_-6px_14px_rgba(255,255,255,0.78)]";
 const ViewModeContext = React.createContext("mobile");
@@ -304,7 +331,7 @@ function Login({ go }) {
   );
 }
 
-function ResumeUpload({ go, fromDashboard = false, resumes = [], uploadQueue = [], onUploadResume = () => {}, onDeleteResume = () => {} }) {
+function ResumeUpload({ go, fromDashboard = false, resumes = [], uploadQueue = [], onUploadResume = () => {}, onOpenResume = () => {}, onDeleteResume = () => {} }) {
   const [uploaded, setUploaded] = useState(resumes.length > 0 || uploadQueue.length > 0);
   const fileInputRef = useRef(null);
 
@@ -392,7 +419,7 @@ function ResumeUpload({ go, fromDashboard = false, resumes = [], uploadQueue = [
             <ResumeUploadCard key={item.id} item={item} uploading />
           ))}
           {resumes.slice(0, 3).map((resume) => (
-            <ResumeUploadCard key={resume.id} item={resume} onDelete={() => onDeleteResume(resume.id)} />
+            <ResumeUploadCard key={resume.id} item={resume} onOpen={() => onOpenResume(resume, "resumeUpload")} onDelete={() => onDeleteResume(resume.id)} />
           ))}
           {resumes.length > 3 && (
             <button onClick={() => go("resumes")} className="w-full rounded-2xl bg-white/30 py-3 text-sm font-semibold text-blue-600 transition hover:bg-white/45">
@@ -431,7 +458,7 @@ function ResumeUpload({ go, fromDashboard = false, resumes = [], uploadQueue = [
   );
 }
 
-function ResumeUploadCard({ item, uploading = false, onDelete }) {
+function ResumeUploadCard({ item, uploading = false, onOpen, onDelete }) {
   const progress = item.progress ?? 100;
   const isError = item.status === "error";
   const isDone = !uploading || item.status === "done" || progress >= 100;
@@ -452,14 +479,13 @@ function ResumeUploadCard({ item, uploading = false, onDelete }) {
         </div>
         <span className="rounded-xl bg-white/40 px-2 py-1 text-[10px] font-bold text-slate-500">{fileLabel}</span>
         {!uploading && item.url && (
-          <a
-            href={item.url}
-            target="_blank"
-            rel="noreferrer"
+          <button
+            type="button"
+            onClick={() => onOpen?.(item)}
             className="rounded-xl bg-white/35 px-3 py-2 text-xs font-semibold text-blue-600 transition hover:bg-white/55"
           >
-            Open
-          </a>
+            Preview
+          </button>
         )}
         {onDelete && (
           <button
@@ -1195,7 +1221,7 @@ function Tracker({ go }) {
   return <PhoneShell><Screen nav go={go} activeTab="jobs"><Header title="Application Tracker" subtitle="Track every opportunity" icon={<GlassIcon className="h-12 w-12 rounded-2xl"><ClipboardList className="h-6 w-6 text-blue-600" /></GlassIcon>} /><div className="mb-4 flex gap-2 overflow-x-auto pb-2">{statuses.map((s) => <button key={s} className={`shrink-0 rounded-full border border-white/60 bg-white/35 px-4 py-2 text-xs font-semibold text-slate-700 ${neoOut}`}>{s}</button>)}</div><div className="space-y-3">{applications.map((a) => <Card key={a.company}><div className="flex items-start justify-between"><div><h3 className="font-semibold text-slate-900">{a.company}</h3><p className="text-sm text-slate-600">{a.role}</p></div><StepPill>{a.status}</StepPill></div><p className="mt-3 text-xs text-slate-500">Applied {a.date} · {a.resume}</p><div className="mt-4 grid grid-cols-3 gap-2"><button className={`rounded-xl bg-white/30 py-2 text-xs font-semibold ${neoOut}`}>Update</button><button className="rounded-xl bg-blue-600 py-2 text-xs font-semibold text-white shadow-[6px_6px_14px_rgba(37,99,235,0.25)]">Interview</button><button className={`rounded-xl bg-white/30 py-2 text-xs font-semibold ${neoOut}`}>Resume</button></div></Card>)}</div></Screen></PhoneShell>;
 }
 
-function ResumesScreen({ go, resumes = [], uploadQueue = [], onUploadResume = () => {}, onDeleteResume = () => {} }) {
+function ResumesScreen({ go, resumes = [], uploadQueue = [], onUploadResume = () => {}, onOpenResume = () => {}, onDeleteResume = () => {} }) {
   const fileInputRef = useRef(null);
   const handleFiles = (fileList) => {
     const files = Array.from(fileList || []);
@@ -1244,7 +1270,7 @@ function ResumesScreen({ go, resumes = [], uploadQueue = [], onUploadResume = ()
 
         <div className="space-y-3">
           {uploadQueue.map((item) => <ResumeUploadCard key={item.id} item={item} uploading />)}
-          {resumes.map((resume) => <ResumeUploadCard key={resume.id} item={resume} onDelete={() => onDeleteResume(resume.id)} />)}
+          {resumes.map((resume) => <ResumeUploadCard key={resume.id} item={resume} onOpen={() => onOpenResume(resume, "resumes")} onDelete={() => onDeleteResume(resume.id)} />)}
           {uploadQueue.length === 0 && resumes.length === 0 && (
             <Card className="text-center">
               <div className={`mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-blue-100/70 text-blue-600 ${neoIn}`}>
@@ -1255,6 +1281,79 @@ function ResumesScreen({ go, resumes = [], uploadQueue = [], onUploadResume = ()
             </Card>
           )}
         </div>
+      </Screen>
+    </PhoneShell>
+  );
+}
+
+
+function ResumePreviewScreen({ go, resume, backTarget = "resumes", onDeleteResume = () => {} }) {
+  const canPreviewPdf = resume?.url && isPdfResume(resume);
+
+  return (
+    <PhoneShell>
+      <Screen>
+        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-4 flex items-center justify-between bg-transparent px-6 pb-3 pt-12 backdrop-blur-sm">
+          <button onClick={() => go(backTarget)} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/60 text-slate-800 shadow-sm transition hover:bg-white/80">
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <div className="min-w-0 flex-1 px-3 text-center">
+            <h1 className="truncate text-base font-semibold text-slate-900">Resume Preview</h1>
+            <p className="truncate text-xs text-slate-500">{resume?.name || "No resume selected"}</p>
+          </div>
+          {resume?.id ? (
+            <button
+              type="button"
+              onClick={() => {
+                onDeleteResume(resume.id);
+                go(backTarget);
+              }}
+              className="grid h-10 w-10 place-items-center rounded-full bg-white/60 text-slate-500 shadow-sm transition hover:bg-red-50 hover:text-red-500"
+              aria-label="Delete resume"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          ) : (
+            <div className="h-10 w-10" />
+          )}
+        </div>
+
+        {!resume ? (
+          <Card className="text-center">
+            <div className={`mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-blue-100/70 text-blue-600 ${neoIn}`}>
+              <FileText className="h-7 w-7" />
+            </div>
+            <h3 className="font-semibold text-slate-900">No resume selected</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Go back to your resume list and choose a file to preview.</p>
+          </Card>
+        ) : canPreviewPdf ? (
+          <div className={`overflow-hidden rounded-3xl border border-white/60 bg-white/30 ${neoOut} backdrop-blur-xl`}>
+            <div className="flex items-center justify-between border-b border-white/50 px-4 py-3">
+              <div className="min-w-0">
+                <h3 className="truncate text-sm font-semibold text-slate-900">{resume.name}</h3>
+                <p className="text-xs text-slate-500">{formatFileSize(resume.size)} · PDF preview</p>
+              </div>
+              <StepPill>Inside app</StepPill>
+            </div>
+            <div className="h-[500px] bg-white/50 sm:h-[560px]">
+              <iframe
+                title={resume.name}
+                src={`${resume.url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                className="h-full w-full border-0 bg-white"
+              />
+            </div>
+          </div>
+        ) : (
+          <Card className="text-center">
+            <div className={`mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-blue-100/70 text-blue-600 ${neoIn}`}>
+              <FileText className="h-7 w-7" />
+            </div>
+            <h3 className="font-semibold text-slate-900">Preview not available</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Browser in-app preview works best for PDF files. DOC and DOCX files are saved in your list, but they cannot be rendered inside the phone screen without a document viewer service.
+            </p>
+          </Card>
+        )}
       </Screen>
     </PhoneShell>
   );
@@ -1498,6 +1597,8 @@ function ViewSwitchButton({ viewMode, onToggle }) {
 export default function App() {
   const [screen, setScreen] = useState("landing");
   const [selectedJob, setSelectedJob] = useState(jobs[0]);
+  const [selectedResume, setSelectedResume] = useState(null);
+  const [resumePreviewBackTarget, setResumePreviewBackTarget] = useState("resumes");
   const [viewMode, setViewMode] = useState("mobile");
   const [chatMode, setChatMode] = useState("setPreferences");
   const [appliedJobs, setAppliedJobs] = useState([]);
@@ -1574,6 +1675,13 @@ export default function App() {
       if (target?.url) URL.revokeObjectURL(target.url);
       return prev.filter((resume) => resume.id !== resumeId);
     });
+    setSelectedResume((prev) => (prev?.id === resumeId ? null : prev));
+  };
+
+  const handleOpenResume = (resume, backTarget = "resumes") => {
+    setSelectedResume(resume);
+    setResumePreviewBackTarget(backTarget);
+    setScreen("resumePreview");
   };
 
   const handleSaveJob = (jobId) => {
@@ -1596,7 +1704,7 @@ export default function App() {
     switch (screen) {
       case "landing": return <Landing go={go} />;
       case "login": return <Login go={go} />;
-      case "resumeUpload": return <ResumeUpload go={go} fromDashboard={hasReachedDashboard} resumes={resumes} uploadQueue={uploadQueue} onUploadResume={handleUploadResume} onDeleteResume={handleDeleteResume} />;
+      case "resumeUpload": return <ResumeUpload go={go} fromDashboard={hasReachedDashboard} resumes={resumes} uploadQueue={uploadQueue} onUploadResume={handleUploadResume} onOpenResume={handleOpenResume} onDeleteResume={handleDeleteResume} />;
       case "aiChatbot": return <AIChatbot key={chatMode} go={go} chatMode={chatMode} fromDashboard={hasReachedDashboard} />;
       case "setup": return <Setup go={go} />;
       case "resumeInput": return <ResumeInput go={go} />;
@@ -1614,11 +1722,12 @@ export default function App() {
       case "review": return <Review go={go} selectedJob={selectedJob} />;
       case "submitted": return <Submitted go={go} selectedJob={selectedJob} onApply={handleApplyJob} />;
       case "tracker": return <Tracker go={go} />;
-      case "resumes": return <ResumesScreen go={go} resumes={resumes} uploadQueue={uploadQueue} onUploadResume={handleUploadResume} onDeleteResume={handleDeleteResume} />;
+      case "resumes": return <ResumesScreen go={go} resumes={resumes} uploadQueue={uploadQueue} onUploadResume={handleUploadResume} onOpenResume={handleOpenResume} onDeleteResume={handleDeleteResume} />;
+      case "resumePreview": return <ResumePreviewScreen go={go} resume={selectedResume} backTarget={resumePreviewBackTarget} onDeleteResume={handleDeleteResume} />;
       case "profile": return <Profile go={go} noNav appliedCount={appliedJobs.length} savedCount={savedJobs.length} jobsCount={jobs.length} resumesCount={resumes.length} />;
       default: return <Landing go={go} />;
     }
-  }, [screen, selectedJob, chatMode, appliedJobs, savedJobs, hasReachedDashboard, dashboardFilter, resumes, uploadQueue]);
+  }, [screen, selectedJob, selectedResume, resumePreviewBackTarget, chatMode, appliedJobs, savedJobs, hasReachedDashboard, dashboardFilter, resumes, uploadQueue]);
 
   const insideAppTransition = screen !== "landing";
   const tabbedScreens = ["dashboard", "profile", "tracker", "aiChatbot"];
