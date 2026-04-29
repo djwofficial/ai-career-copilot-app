@@ -1,5 +1,5 @@
 import React, { useContext, useMemo, useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
   ArrowLeft,
@@ -9,7 +9,7 @@ import {
   Home,
   User,
   Briefcase,
-  Bot,
+  Infinity,
   FileText,
   Search,
   Bell,
@@ -317,7 +317,7 @@ const Screen = ({ children, nav, floatingNav, className = "", go = () => {}, act
 function BottomNav({ go = () => {}, activeTab = "home" }) {
   const items = [
     { icon: Home, label: "Home", key: "home", target: "dashboard" },
-    { icon: Bot, label: "AI Chat", key: "aiChatbot", target: "aiChatbot", mode: "chatOpen" },
+    { icon: Infinity, label: "AI Chat", key: "aiChatbot", target: "aiChatbot", mode: "chatOpen" },
     { icon: User, label: "Profile", key: "profile", target: "profile" },
   ];
   return (
@@ -368,7 +368,7 @@ function Landing({ go }) {
     <div className="grid min-h-screen gap-10 bg-[#eaeceb] px-6 py-8 text-[#000100] lg:grid-cols-[1.05fr_.95fr] lg:px-16">
       <div className="flex flex-col justify-center">
         <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-[#d1d3d2] bg-[#ffffff] px-4 py-2 text-sm font-bold text-[#000100]">
-          <div className="grid h-6 w-6 place-items-center rounded-full bg-[#000100]"><Bot className="h-3.5 w-3.5 text-white" /></div> AI Agentic Resume Assistant
+          <div className="grid h-6 w-6 place-items-center rounded-full bg-[#000100]"><Infinity className="h-3.5 w-3.5 text-white" /></div> AI Agentic Resume Assistant
         </div>
         <h1 className="max-w-3xl text-5xl font-black tracking-tight text-[#000100] md:text-7xl">Let AI handle your job hunting journey.</h1>
         <p className="mt-6 max-w-2xl text-lg leading-8 text-[#666666]">Build an ATS-friendly resume, discover roles that match your goals, tailor every application, and approve auto-apply actions before anything is submitted.</p>
@@ -652,8 +652,7 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false, onS
     "use my linkedin": [
       "Great choice. I already have access to your LinkedIn profile for this demo.",
       "Reading LinkedIn data… Found your education, project experience, skills, portfolio link, and career interests.",
-      "I’m converting your LinkedIn profile into a resume format with ATS-friendly sections and stronger impact wording.",
-      "I have enough information now, so I’m creating your LinkedIn-based resume in the background. You can keep using the app and I’ll notify you when it’s ready."
+      "I’m converting your LinkedIn profile into a resume format with ATS-friendly sections and stronger impact wording."
     ]
   };
 
@@ -829,8 +828,10 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false, onS
       },
     ];
 
-    onStartBackgroundResume(linkedInResumeAnswers);
-    addAgentSequence(userText, createResumeFlows["use my linkedin"]);
+    addAgentSequence(userText, createResumeFlows["use my linkedin"], () => {
+      onStartBackgroundResume(linkedInResumeAnswers);
+      setTimeout(() => go("analyzing"), 1000);
+    });
   };
 
   const handleTypeItOutAnswer = (userText) => {
@@ -842,13 +843,14 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false, onS
       { question: "Skills and tools", answer: userText },
       { question: "Achievements and links", answer: userText },
     ];
-    onStartBackgroundResume(typedResumeAnswers);
     addAgentSequence(userText, [
       "Got it. I received your rough resume information and I’m extracting the key details now.",
       "I’m organizing it into resume sections: Summary, Education, Skills, Projects, Experience, and Achievements.",
       "Now I’m rewriting your notes into concise, ATS-friendly bullet points in the background.",
-      "You can leave this screen and keep using the app. I’ll notify you when the resume is ready.",
-    ]);
+    ], () => {
+      onStartBackgroundResume(typedResumeAnswers);
+      setTimeout(() => go("analyzing"), 1000);
+    });
   };
 
   const handleHelpWriteAnswer = (userText) => {
@@ -871,12 +873,13 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false, onS
 
     setHelpWriteAnswers([]);
     setHelpWriteStep(null);
-    onStartBackgroundResume(updatedAnswers);
     addAgentSequence(userText, [
       "Perfect. I have enough information to create your first resume draft.",
       "I’m now writing the resume in the background: summary, education, skills, projects, and ATS-friendly bullet points.",
-      "You can leave this screen and keep using the app. I’ll notify you when the resume is ready.",
-    ]);
+    ], () => {
+      onStartBackgroundResume(updatedAnswers);
+      setTimeout(() => go("analyzing"), 1000);
+    });
   };
 
   const handleSend = () => {
@@ -930,7 +933,7 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false, onS
     } else {
       newMessages.push({ from: "ai", text: "Perfect. I saved your preferences and will use them to filter job results, rank matches, and avoid roles that do not fit your goals." });
       setMessages(newMessages);
-      setTimeout(() => go("dashboard"), 2000);
+      setTimeout(() => go("analyzing"), 2000);
     }
   };
 
@@ -1091,7 +1094,7 @@ function ResumeInput({ go }) {
       <div className="mx-auto mb-8 w-fit"><GlassIcon><Star className="h-9 w-9 fill-[#a0fe08] text-[#a0fe08]" /></GlassIcon></div>
       <p className="text-xs text-[#666666]">Step 2 of 2</p><h1 className="mt-2 text-xl font-bold text-[#000100]">Upload your resume</h1><p className="mt-2 text-sm text-[#666666]">Drop your PDF and we&apos;ll match you with the right roles.</p>
       <button onClick={() => go("builder")} className={`mt-8 flex h-40 w-full flex-col items-center justify-center rounded-3xl border-2 border-dashed border-[#d1d3d2] bg-[#ffffff] text-[#000100] ${neoIn} `}><div className={`mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-[#eaeceb] ${neoOut}`}><Upload className="h-7 w-7" /></div><span className="text-sm font-bold">Tap to upload PDF</span><span className="mt-1 text-xs text-[#666666]">or drag & drop here</span></button>
-      <div className="mt-8 space-y-3"><PrimaryButton onClick={() => go("builder")}>Continue <ArrowRight className="h-4 w-4" /></PrimaryButton><SecondaryButton onClick={() => go("story")}>Tell Your Story <Bot className="h-4 w-4" /></SecondaryButton><button onClick={() => go("dashboard")} className="w-full py-2 text-sm text-[#666666]">Skip for now</button></div>
+      <div className="mt-8 space-y-3"><PrimaryButton onClick={() => go("builder")}>Continue <ArrowRight className="h-4 w-4" /></PrimaryButton><SecondaryButton onClick={() => go("story")}>Tell Your Story <Infinity className="h-4 w-4" /></SecondaryButton><button onClick={() => go("dashboard")} className="w-full py-2 text-sm text-[#666666]">Skip for now</button></div>
     </Screen></PhoneShell>
   );
 }
@@ -1141,6 +1144,59 @@ function Skill({ go }) {
       <div className="mt-4 space-y-3">{[["Already strong", ["Figma", "React", "Research"]], ["Missing skills", ["TypeScript", "A/B Testing", "SQL"]], ["Trending skills", ["AI workflow", "Design system", "Analytics"]], ["Learning priorities", ["TypeScript basics", "Portfolio case study", "Testing"]]].map(([title, chips]) => <Card key={title}><h3 className="mb-3 font-bold text-[#000100]">{title}</h3><div className="flex flex-wrap gap-2">{chips.map((c) => <StepPill key={c}>{c}</StepPill>)}</div></Card>)}</div>
       <div className="mt-5"><PrimaryButton onClick={() => go("dashboard")}>Go to Dashboard</PrimaryButton></div>
     </Screen></PhoneShell>
+  );
+}
+
+function AnalyzingScreen({ go }) {
+  const [phase, setPhase] = useState(0);
+  const phases = [
+    "Hang tight...",
+    "Reading resume...",
+    "Finding matching companies..."
+  ];
+
+  useEffect(() => {
+    const timer1 = setTimeout(() => setPhase(1), 2200);
+    const timer2 = setTimeout(() => setPhase(2), 4400);
+    const timer3 = setTimeout(() => go("dashboard"), 7000);
+    return () => { clearTimeout(timer1); clearTimeout(timer2); clearTimeout(timer3); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <PhoneShell>
+      <Screen noNav>
+        <div className="flex h-full flex-col items-center justify-center p-6 text-center">
+          <div className="relative mb-8 grid h-28 w-28 place-items-center mx-auto">
+            {/* Heartbeat filled circle */}
+            <motion.div
+              animate={{ scale: [1, 1.1, 1, 1.3, 1], opacity: [0.4, 0.8, 0.4, 0.1, 0.4] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute inset-0 rounded-full bg-[#a0fe08]"
+            />
+            {/* Center icon */}
+            <div className="relative z-10 grid h-20 w-20 place-items-center rounded-full bg-[#000100] text-[#a0fe08]">
+              <Infinity className="h-10 w-10" />
+            </div>
+          </div>
+          
+          <div className="flex h-12 w-full items-center justify-center overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.h2
+                key={phase}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.3 }}
+                className="text-lg font-bold text-[#000100]"
+              >
+                {phases[phase]}
+              </motion.h2>
+            </AnimatePresence>
+          </div>
+        </div>
+      </Screen>
+    </PhoneShell>
   );
 }
 
@@ -1439,7 +1495,7 @@ function JobSetup({ go }) {
 function Running({ go }) {
   const steps = ["Searching platforms", "Checking requirements", "Comparing with resume", "Filtering by preferences", "Ranking best matches"];
   return (
-    <PhoneShell><Screen><Header title="AI Agent Running" subtitle="Background job search" icon={<GlassIcon className="h-12 w-12 rounded-2xl"><Bot className="h-6 w-6 text-white" /></GlassIcon>} />
+    <PhoneShell><Screen><Header title="AI Agent Running" subtitle="Background job search" icon={<GlassIcon className="h-12 w-12 rounded-2xl"><Infinity className="h-6 w-6 text-white" /></GlassIcon>} />
       <Card className="text-center"><div className="mx-auto mb-5 grid h-24 w-24 place-items-center rounded-full bg-[#000100] text-white "><Sparkles className="h-10 w-10" /></div><h3 className="font-bold text-[#000100]">Searching jobs in the background</h3><p className="mt-2 text-sm leading-6 text-[#666666]">You can close the app. I&apos;ll notify you when the search is complete.</p></Card>
       <div className="mt-4 space-y-3">{steps.map((s, i) => <Card key={s} className="flex items-center gap-3 py-4"><CheckCircle2 className={`h-5 w-5 ${i < 3 ? "text-[#a0fe08]" : "text-[#a0fe08]"}`} /><span className="text-sm font-medium text-[#000100]">{s}</span></Card>)}</div>
       <div className="mt-6 space-y-3"><PrimaryButton onClick={() => go("complete")}>Notify Me When Done</PrimaryButton><SecondaryButton onClick={() => go("results")}>View Live Progress</SecondaryButton><button onClick={() => go("dashboard")} className="w-full py-2 text-sm text-[#666666]">Cancel Search</button></div>
@@ -1958,7 +2014,7 @@ export default function App() {
       const generatedResume = buildAiGeneratedResume(answers);
       setResumes((prev) => [generatedResume, ...prev]);
       setAgentResumeJob({ status: "done", notification: true, resumeName: generatedResume.name });
-    }, 6500);
+    }, 8800);
   };
 
   const handleAgentNotificationClick = () => {
@@ -1999,6 +2055,7 @@ export default function App() {
       case "analysis": return <Analysis go={go} />;
       case "skill": return <Skill go={go} />;
       case "dashboard": return <Dashboard go={go} appliedJobs={appliedJobs} savedJobs={savedJobs} onSaveJob={handleSaveJob} noNav dashboardFilter={dashboardFilter} setDashboardFilter={setDashboardFilter} />;
+      case "analyzing": return <AnalyzingScreen go={go} />;
       case "jobSetup": return <JobSetup go={go} />;
       case "running": return <Running go={go} />;
       case "complete": return <Complete go={go} />;
