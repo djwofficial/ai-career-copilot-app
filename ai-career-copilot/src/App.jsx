@@ -327,24 +327,27 @@ function BottomNav({ go = () => {}, activeTab = "home" }) {
         const Icon = item.icon;
         const active = activeTab === item.key;
         return (
-          <button
-            key={item.key}
-            onClick={() => go(item.target, null, item.mode)}
-            className={`flex items-center justify-center rounded-full transition-all duration-300 ease-out ${
-              active
-                ? "gap-1.5 bg-[#a0fe08] px-5 py-3 text-[#000100]"
-                : "flex-1 gap-0 py-3 text-white/50 hover:text-white"
-            }`}
-          >
-            <Icon className="h-[22px] w-[22px] shrink-0" strokeWidth={active ? 2.4 : 1.8} />
-            <span
-              className={`overflow-hidden whitespace-nowrap text-[13px] font-bold transition-all duration-300 ease-out ${
-                active ? "max-w-[80px] opacity-100" : "max-w-0 opacity-0"
+          <div key={item.key} className="flex flex-1 justify-center">
+            <button
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => go(item.target, null, item.mode)}
+              className={`flex w-full items-center justify-center rounded-full py-3 transition-all duration-300 ease-out ${
+                active
+                  ? "gap-1.5 bg-[#a0fe08] px-4 text-[#000100]"
+                  : "gap-0 px-4 text-white/50 hover:text-white"
               }`}
             >
-              {item.label}
-            </span>
-          </button>
+              <Icon className="h-[22px] w-[22px] shrink-0" strokeWidth={active ? 2.4 : 1.8} />
+              <span
+                className={`overflow-hidden whitespace-nowrap text-[13px] font-bold transition-all duration-300 ease-out ${
+                  active ? "max-w-[80px] opacity-100" : "max-w-0 opacity-0"
+                }`}
+              >
+                {item.label}
+              </span>
+            </button>
+          </div>
         );
       })}
     </div>
@@ -565,6 +568,7 @@ function ResumeUpload({ go, fromDashboard = false, resumes = [], uploadQueue = [
 
       {/* Create New Resume Option */}
       <button
+        onMouseDown={(event) => event.preventDefault()}
         onClick={() => go("aiChatbot", null, "createResume")}
         className="mt-3 flex w-full items-center gap-4 rounded-3xl border border-[#d1d3d2] bg-[#ffffff] p-5 text-left transition hover:bg-[#eaeceb]"
       >
@@ -2085,6 +2089,10 @@ export default function App() {
   };
 
   const go = (next, job, mode, filterParam) => {
+    const shouldKeepWindowScroll = next === "aiChatbot" && (mode === "chatOpen" || mode === "createResume");
+    const savedScrollX = shouldKeepWindowScroll && typeof window !== "undefined" ? window.scrollX : 0;
+    const savedScrollY = shouldKeepWindowScroll && typeof window !== "undefined" ? window.scrollY : 0;
+
     if (job) setSelectedJob(job);
     if (mode) {
       setChatMode(mode);
@@ -2093,7 +2101,15 @@ export default function App() {
     if (filterParam) setDashboardFilter(filterParam);
     if (next === "dashboard") setHasReachedDashboard(true);
     setScreen(next);
+
+    if (shouldKeepWindowScroll && typeof window !== "undefined") {
+      requestAnimationFrame(() => {
+        window.scrollTo(savedScrollX, savedScrollY);
+        setTimeout(() => window.scrollTo(savedScrollX, savedScrollY), 0);
+      });
+    }
   };
+
 
   const component = useMemo(() => {
     switch (screen) {
