@@ -326,30 +326,24 @@ function BottomNav({ go = () => {}, activeTab = "home" }) {
         const Icon = item.icon;
         const active = activeTab === item.key;
         return (
-          <motion.button
+          <button
             key={item.key}
             onClick={() => go(item.target, null, item.mode)}
-            layout
-            transition={{ type: "spring", stiffness: 500, damping: 30, mass: 0.8 }}
-            className={`flex items-center justify-center gap-2.5 rounded-full transition-colors ${
+            className={`flex items-center justify-center rounded-full transition-all duration-300 ease-out ${
               active
-                ? "bg-[#a0fe08] px-5 py-3 text-[#000100]"
-                : "flex-1 py-3 text-white/50 hover:text-white"
+                ? "gap-1.5 bg-[#a0fe08] px-5 py-3 text-[#000100]"
+                : "flex-1 gap-0 py-3 text-white/50 hover:text-white"
             }`}
           >
             <Icon className="h-[22px] w-[22px] shrink-0" strokeWidth={active ? 2.4 : 1.8} />
-            {active && (
-              <motion.span
-                initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: "auto" }}
-                exit={{ opacity: 0, width: 0 }}
-                transition={{ type: "spring", stiffness: 500, damping: 30, delay: 0.06 }}
-                className="overflow-hidden whitespace-nowrap text-[13px] font-bold"
-              >
-                {item.label}
-              </motion.span>
-            )}
-          </motion.button>
+            <span
+              className={`overflow-hidden whitespace-nowrap text-[13px] font-bold transition-all duration-300 ease-out ${
+                active ? "max-w-[80px] opacity-100" : "max-w-0 opacity-0"
+              }`}
+            >
+              {item.label}
+            </span>
+          </button>
         );
       })}
     </div>
