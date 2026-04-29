@@ -9,7 +9,7 @@ import {
   Home,
   User,
   Briefcase,
-  Infinity,
+  Infinity as InfinityIcon,
   FileText,
   Search,
   Bell,
@@ -317,7 +317,7 @@ const Screen = ({ children, nav, floatingNav, className = "", go = () => {}, act
 function BottomNav({ go = () => {}, activeTab = "home" }) {
   const items = [
     { icon: Home, label: "Home", key: "home", target: "dashboard" },
-    { icon: Infinity, label: "AI Chat", key: "aiChatbot", target: "aiChatbot", mode: "chatOpen" },
+    { icon: InfinityIcon, label: "AI Chat", key: "aiChatbot", target: "aiChatbot", mode: "chatOpen" },
     { icon: User, label: "Profile", key: "profile", target: "profile" },
   ];
   return (
@@ -368,7 +368,7 @@ function Landing({ go }) {
     <div className="grid min-h-screen gap-10 bg-[#eaeceb] px-6 py-8 text-[#000100] lg:grid-cols-[1.05fr_.95fr] lg:px-16">
       <div className="flex flex-col justify-center">
         <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-[#d1d3d2] bg-[#ffffff] px-4 py-2 text-sm font-bold text-[#000100]">
-          <div className="grid h-6 w-6 place-items-center rounded-full bg-[#000100]"><Infinity className="h-3.5 w-3.5 text-white" /></div> AI Agentic Resume Assistant
+          <div className="grid h-6 w-6 place-items-center rounded-full bg-[#000100]"><InfinityIcon className="h-3.5 w-3.5 text-white" /></div> AI Agentic Resume Assistant
         </div>
         <h1 className="max-w-3xl text-5xl font-black tracking-tight text-[#000100] md:text-7xl">Let AI handle your job hunting journey.</h1>
         <p className="mt-6 max-w-2xl text-lg leading-8 text-[#666666]">Build an ATS-friendly resume, discover roles that match your goals, tailor every application, and approve auto-apply actions before anything is submitted.</p>
@@ -1094,7 +1094,7 @@ function ResumeInput({ go }) {
       <div className="mx-auto mb-8 w-fit"><GlassIcon><Star className="h-9 w-9 fill-[#a0fe08] text-[#a0fe08]" /></GlassIcon></div>
       <p className="text-xs text-[#666666]">Step 2 of 2</p><h1 className="mt-2 text-xl font-bold text-[#000100]">Upload your resume</h1><p className="mt-2 text-sm text-[#666666]">Drop your PDF and we&apos;ll match you with the right roles.</p>
       <button onClick={() => go("builder")} className={`mt-8 flex h-40 w-full flex-col items-center justify-center rounded-3xl border-2 border-dashed border-[#d1d3d2] bg-[#ffffff] text-[#000100] ${neoIn} `}><div className={`mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-[#eaeceb] ${neoOut}`}><Upload className="h-7 w-7" /></div><span className="text-sm font-bold">Tap to upload PDF</span><span className="mt-1 text-xs text-[#666666]">or drag & drop here</span></button>
-      <div className="mt-8 space-y-3"><PrimaryButton onClick={() => go("builder")}>Continue <ArrowRight className="h-4 w-4" /></PrimaryButton><SecondaryButton onClick={() => go("story")}>Tell Your Story <Infinity className="h-4 w-4" /></SecondaryButton><button onClick={() => go("dashboard")} className="w-full py-2 text-sm text-[#666666]">Skip for now</button></div>
+      <div className="mt-8 space-y-3"><PrimaryButton onClick={() => go("builder")}>Continue <ArrowRight className="h-4 w-4" /></PrimaryButton><SecondaryButton onClick={() => go("story")}>Tell Your Story <InfinityIcon className="h-4 w-4" /></SecondaryButton><button onClick={() => go("dashboard")} className="w-full py-2 text-sm text-[#666666]">Skip for now</button></div>
     </Screen></PhoneShell>
   );
 }
@@ -1176,7 +1176,7 @@ function AnalyzingScreen({ go }) {
             />
             {/* Center icon */}
             <div className="relative z-10 grid h-20 w-20 place-items-center rounded-full bg-[#000100] text-[#a0fe08]">
-              <Infinity className="h-10 w-10" />
+              <InfinityIcon className="h-10 w-10" />
             </div>
           </div>
           
@@ -1495,7 +1495,7 @@ function JobSetup({ go }) {
 function Running({ go }) {
   const steps = ["Searching platforms", "Checking requirements", "Comparing with resume", "Filtering by preferences", "Ranking best matches"];
   return (
-    <PhoneShell><Screen><Header title="AI Agent Running" subtitle="Background job search" icon={<GlassIcon className="h-12 w-12 rounded-2xl"><Infinity className="h-6 w-6 text-white" /></GlassIcon>} />
+    <PhoneShell><Screen><Header title="AI Agent Running" subtitle="Background job search" icon={<GlassIcon className="h-12 w-12 rounded-2xl"><InfinityIcon className="h-6 w-6 text-white" /></GlassIcon>} />
       <Card className="text-center"><div className="mx-auto mb-5 grid h-24 w-24 place-items-center rounded-full bg-[#000100] text-white "><Sparkles className="h-10 w-10" /></div><h3 className="font-bold text-[#000100]">Searching jobs in the background</h3><p className="mt-2 text-sm leading-6 text-[#666666]">You can close the app. I&apos;ll notify you when the search is complete.</p></Card>
       <div className="mt-4 space-y-3">{steps.map((s, i) => <Card key={s} className="flex items-center gap-3 py-4"><CheckCircle2 className={`h-5 w-5 ${i < 3 ? "text-[#a0fe08]" : "text-[#a0fe08]"}`} /><span className="text-sm font-medium text-[#000100]">{s}</span></Card>)}</div>
       <div className="mt-6 space-y-3"><PrimaryButton onClick={() => go("complete")}>Notify Me When Done</PrimaryButton><SecondaryButton onClick={() => go("results")}>View Live Progress</SecondaryButton><button onClick={() => go("dashboard")} className="w-full py-2 text-sm text-[#666666]">Cancel Search</button></div>
