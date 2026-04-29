@@ -828,12 +828,23 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false, onS
       };
     }
 
-    const initial = chatMode === "createResume"
-      ? { from: "user", text: "I want to create a resume" }
-      : { from: "user", text: "I want to set my preferences" };
+    if (chatMode === "createResume") {
+      return {
+        messages: [
+          { from: "user", text: "I want to create a resume" },
+          { from: "user", text: "Help me write it" },
+          ...createResumeFlows["help me write it"].map((text) => ({ from: "ai", text })),
+        ],
+        step: questions.length,
+        helpWriteStep: 0,
+      };
+    }
 
     return {
-      messages: [initial, { from: "ai", text: questions[0] }],
+      messages: [
+        { from: "user", text: "I want to set my preferences" },
+        { from: "ai", text: questions[0] },
+      ],
       step: 1,
     };
   }, [agentResumeNotice, chatMode, isChatOpen, questions]);
@@ -842,7 +853,7 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false, onS
   const [inputText, setInputText] = useState("");
   const [step, setStep] = useState(initialChatState.step);
   const [isTyping, setIsTyping] = useState(false);
-  const [helpWriteStep, setHelpWriteStep] = useState(null);
+  const [helpWriteStep, setHelpWriteStep] = useState(initialChatState.helpWriteStep ?? null);
   const [helpWriteAnswers, setHelpWriteAnswers] = useState([]);
   const [typeItOutActive, setTypeItOutActive] = useState(false);
 
