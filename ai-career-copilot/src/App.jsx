@@ -567,7 +567,7 @@ function ResumeUpload({ go, fromDashboard = false, backTarget = null, resumes = 
       {/* Upload Resume Option */}
       <button
         type="button"
-        onClick={() => setUploaded(true)}
+        onClick={() => setUploaded((prev) => !prev)}
         className={`mt-6 flex w-full items-center gap-4 rounded-3xl border p-5 text-left transition ${uploaded ? "border-[#000100] bg-[#ffffff]" : "border-[#d1d3d2] bg-[#ffffff]"}`}
       >
         <div className={`grid h-14 w-14 shrink-0 place-items-center rounded-full ${uploaded ? "bg-[#000100] text-white" : "bg-[#eaeceb] text-[#000100]"}`}>
