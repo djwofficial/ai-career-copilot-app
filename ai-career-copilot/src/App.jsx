@@ -582,34 +582,39 @@ function ResumeUpload({ go, fromDashboard = false, backTarget = null, resumes = 
       </button>
 
       {/* Upload drop zone */}
-      {uploaded && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          className="overflow-hidden"
-        >
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => fileInputRef.current?.click()}
-            onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && fileInputRef.current?.click()}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={handleDrop}
-            className="mt-3 flex h-36 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#000100]/30 bg-[#ffffff] text-[#000100] transition hover:bg-[#eaeceb]"
+      <AnimatePresence>
+        {uploaded && (
+          <motion.div
+            key="upload-drop-zone"
+            initial={{ opacity: 0, height: 0, marginTop: 0 }}
+            animate={{ opacity: 1, height: "auto", marginTop: 12 }}
+            exit={{ opacity: 0, height: 0, marginTop: 0 }}
+            transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden"
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              className="hidden"
-              onChange={(e) => handleFiles(e.target.files)}
-            />
-            <Upload className="mb-2 h-7 w-7" />
-            <span className="text-sm font-bold">Tap to upload or drag & drop</span>
-            <span className="mt-1 text-xs text-[#666666]">PDF, DOC, DOCX up to 5MB</span>
-          </div>
-        </motion.div>
-      )}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && fileInputRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleDrop}
+              className="flex h-36 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#000100]/30 bg-[#ffffff] text-[#000100] transition hover:bg-[#eaeceb]"
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                className="hidden"
+                onChange={(e) => handleFiles(e.target.files)}
+              />
+              <Upload className="mb-2 h-7 w-7" />
+              <span className="text-sm font-bold">Tap to upload or drag & drop</span>
+              <span className="mt-1 text-xs text-[#666666]">PDF, DOC, DOCX up to 5MB</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {(uploadQueue.length > 0 || resumes.length > 0) && (
         <div className="mt-4 space-y-3">
