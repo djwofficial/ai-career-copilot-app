@@ -502,10 +502,11 @@ function Landing({ go }) {
   );
 }
 
-function Login({ go }) {
+function Login({ go, resumesCount = 0 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const handleSubmit = (e) => { e.preventDefault(); go("resumeUpload"); };
+  const nextAfterLogin = resumesCount === 0 ? "resumeUpload" : "dashboard";
+  const handleSubmit = (e) => { e.preventDefault(); go(nextAfterLogin); };
   return (
     <PhoneShell>
       <Screen>
@@ -527,7 +528,7 @@ function Login({ go }) {
             </button>
             <PrimaryButton className="mt-5" onClick={handleSubmit}>Sign in <ArrowRight className="h-4 w-4" /></PrimaryButton>
             <div className="my-6 flex items-center gap-3 text-xs text-[#666666]"><span className="h-px flex-1 bg-[#d1d3d2]" /> or continue with <span className="h-px flex-1 bg-[#d1d3d2]" /></div>
-            <div className="grid grid-cols-2 gap-3"><SecondaryButton onClick={() => go("resumeUpload")}>Google</SecondaryButton><SecondaryButton onClick={() => go("resumeUpload")}>Demo Mode</SecondaryButton></div>
+            <div className="grid grid-cols-2 gap-3"><SecondaryButton onClick={() => go(nextAfterLogin)}>Google</SecondaryButton><SecondaryButton onClick={() => go(nextAfterLogin)}>Demo Mode</SecondaryButton></div>
           </div>
           <p className="pb-2 text-center text-sm text-[#666666]">Don&apos;t have an account? <button type="button" onClick={() => go("signup")} className="font-bold text-[#000100]">Sign up</button></p>
         </form>
@@ -2256,7 +2257,7 @@ export default function App() {
     switch (screen) {
       case "landing": return <Landing go={go} />;
       case "loginLoading": return <LoginLoadingScreen go={go} />;
-      case "login": return <Login go={go} />;
+      case "login": return <Login go={go} resumesCount={resumes.length} />;
       case "signup": return <SignUp go={go} />;
       case "resumeUpload": return <ResumeUpload go={go} fromDashboard={hasReachedDashboard} backTarget={resumeUploadBackTarget} resumes={resumes} uploadQueue={uploadQueue} onUploadResume={handleUploadResume} onOpenResume={handleOpenResume} onDeleteResume={handleDeleteResume} />;
       case "aiChatbot": return <AIChatbot key={`${chatMode}-${agentResumeNotice?.timestamp || "normal"}`} go={go} chatMode={chatMode} fromDashboard={hasReachedDashboard} backTarget={chatBackTarget} hideBottomNav={chatMode === "createResume" && chatBackTarget === "resumeUpload" && resumeUploadBackTarget === "login"} onStartBackgroundResume={handleStartBackgroundResume} agentResumeNotice={agentResumeNotice} />;
