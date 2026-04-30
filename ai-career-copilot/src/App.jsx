@@ -840,9 +840,19 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false, bac
       };
     }
 
-    const initial = chatMode === "createResume"
-      ? { from: "user", text: "I want to create a resume" }
-      : { from: "user", text: "I want to set my preferences" };
+    if (chatMode === "createResume") {
+      return {
+        messages: [
+          { from: "user", text: "I want to create a resume" },
+          { from: "ai", text: "Absolutely. I’ll guide you like a resume coach and turn your answers into a professional resume draft." },
+          { from: "ai", text: "I’ll ask 5 short questions. After your final answer, I’ll create the resume in the background so you can continue using the app." },
+          { from: "ai", text: helpWriteQuestions[0] },
+        ],
+        step: 0,
+      };
+    }
+
+    const initial = { from: "user", text: "I want to set my preferences" };
 
     return {
       messages: [initial, { from: "ai", text: questions[0] }],
@@ -854,7 +864,7 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false, bac
   const [inputText, setInputText] = useState("");
   const [step, setStep] = useState(initialChatState.step);
   const [isTyping, setIsTyping] = useState(false);
-  const [helpWriteStep, setHelpWriteStep] = useState(null);
+  const [helpWriteStep, setHelpWriteStep] = useState(chatMode === "createResume" && !agentResumeNotice ? 0 : null);
   const [helpWriteAnswers, setHelpWriteAnswers] = useState([]);
   const [typeItOutActive, setTypeItOutActive] = useState(false);
 
@@ -1054,7 +1064,7 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false, bac
   const quickReplies = isChatOpen
     ? ["Find me jobs", "Improve my resume", "Career advice", "Salary insights"]
     : chatMode === "createResume"
-    ? ["Help me write it", "I'll type it out", "Use my LinkedIn"]
+    ? []
     : ["Remote only", "Full-time", "Entry level", "$50K–$80K"];
 
   const handleQuickReply = (reply) => {
@@ -1151,18 +1161,20 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false, bac
 
         {/* Fixed bottom composer */}
         <div className="shrink-0 border-t border-[#d1d3d2] pt-3">
-          <div className="mb-3 flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-            {quickReplies.map((q) => (
-              <button
-                key={q}
-                onClick={() => handleQuickReply(q)}
-                disabled={isTyping}
-                className="shrink-0 rounded-full border border-[#d1d3d2] bg-[#ffffff] px-4 py-2 text-xs font-bold text-[#000100] transition active:bg-[#eaeceb] disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {q}
-              </button>
-            ))}
-          </div>
+          {quickReplies.length > 0 && (
+            <div className="mb-3 flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+              {quickReplies.map((q) => (
+                <button
+                  key={q}
+                  onClick={() => handleQuickReply(q)}
+                  disabled={isTyping}
+                  className="shrink-0 rounded-full border border-[#d1d3d2] bg-[#ffffff] px-4 py-2 text-xs font-bold text-[#000100] transition active:bg-[#eaeceb] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="rounded-full border border-[#d1d3d2] bg-[#ffffff] p-2">
             <div className="flex items-center gap-2 rounded-full bg-transparent px-2 py-1 text-sm">
