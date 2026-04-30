@@ -724,7 +724,7 @@ function ResumeUploadCard({ item, uploading = false, onOpen, onDelete }) {
   );
 }
 
-function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false, backTarget = null, onStartBackgroundResume = () => {}, agentResumeNotice = null }) {
+function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false, backTarget = null, hideBottomNav = false, onStartBackgroundResume = () => {}, agentResumeNotice = null }) {
   const prefQuestions = [
     "What kind of job are you looking for? (e.g. UX Designer, Frontend Developer, Product Manager)",
     "What's your preferred location? (e.g. Remote, San Francisco, New York)",
@@ -1087,7 +1087,7 @@ function AIChatbot({ go, chatMode = "setPreferences", fromDashboard = false, bac
 
   return (
     <PhoneShell>
-      <div className="flex h-full min-h-0 flex-1 flex-col px-6 pb-28 pt-8">
+      <div className={`flex h-full min-h-0 flex-1 flex-col px-6 pt-8 ${hideBottomNav ? "pb-6" : "pb-28"}`}>
         {/* Fixed top area */}
         <div className="shrink-0">
           <div className="mb-4 mt-4 flex items-center justify-between">
@@ -2191,7 +2191,7 @@ export default function App() {
       case "loginLoading": return <LoginLoadingScreen go={go} />;
       case "login": return <Login go={go} />;
       case "resumeUpload": return <ResumeUpload go={go} fromDashboard={hasReachedDashboard} backTarget={resumeUploadBackTarget} resumes={resumes} uploadQueue={uploadQueue} onUploadResume={handleUploadResume} onOpenResume={handleOpenResume} onDeleteResume={handleDeleteResume} />;
-      case "aiChatbot": return <AIChatbot key={`${chatMode}-${agentResumeNotice?.timestamp || "normal"}`} go={go} chatMode={chatMode} fromDashboard={hasReachedDashboard} backTarget={chatBackTarget} onStartBackgroundResume={handleStartBackgroundResume} agentResumeNotice={agentResumeNotice} />;
+      case "aiChatbot": return <AIChatbot key={`${chatMode}-${agentResumeNotice?.timestamp || "normal"}`} go={go} chatMode={chatMode} fromDashboard={hasReachedDashboard} backTarget={chatBackTarget} hideBottomNav={chatMode === "createResume" && chatBackTarget === "resumeUpload" && resumeUploadBackTarget === "login"} onStartBackgroundResume={handleStartBackgroundResume} agentResumeNotice={agentResumeNotice} />;
       case "setup": return <Setup go={go} />;
       case "resumeInput": return <ResumeInput go={go} />;
       case "story": return <Story go={go} />;
@@ -2217,8 +2217,9 @@ export default function App() {
   }, [screen, selectedJob, selectedResume, resumePreviewBackTarget, chatMode, chatBackTarget, resumeUploadBackTarget, agentResumeNotice, appliedJobs, savedJobs, hasReachedDashboard, dashboardFilter, resumes, uploadQueue]);
 
   const insideAppTransition = screen !== "landing";
+  const hideFirstTimeCreateResumeNav = screen === "aiChatbot" && chatMode === "createResume" && chatBackTarget === "resumeUpload" && resumeUploadBackTarget === "login";
   const tabbedScreens = ["dashboard", "profile", "tracker", "aiChatbot"];
-  const isTabbed = tabbedScreens.includes(screen);
+  const isTabbed = tabbedScreens.includes(screen) && !hideFirstTimeCreateResumeNav;
   const activeTab = screen === "profile" || screen === "tracker" ? "profile" : screen === "aiChatbot" ? "aiChatbot" : "home";
 
   return (
