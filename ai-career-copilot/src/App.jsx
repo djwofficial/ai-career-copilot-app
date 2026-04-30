@@ -1926,8 +1926,13 @@ function Profile({ go, noNav = false, appliedCount, savedCount, jobsCount, resum
         <motion.button
           type="button"
           onClick={() => go("login")}
-          whileTap={{ scale: 0.96 }}
-          className="mb-4 flex w-full items-center justify-center gap-2 rounded-3xl border border-[#d1d3d2] bg-[#ffffff] p-4 text-sm font-bold text-red-500 transition-all duration-150 hover:border-red-200 hover:bg-red-50 active:border-red-300 active:bg-red-100 active:shadow-inner"
+         whileTap={{
+            scale: 0.97,
+            y: 6,
+            boxShadow: "inset 0 8px 18px rgba(127,29,29,0.45), 0 0 10px rgba(239,68,68,0.45)",
+          }}
+          transition={{ type: "spring", stiffness: 780, damping: 18, mass: 0.45 }}
+          className="mb-4 flex w-full items-center justify-center gap-2 rounded-3xl border border-[#d1d3d2] bg-[#ffffff] p-4 text-sm font-bold text-red-500 transition-all duration-200 hover:-translate-y-0.5 hover:border-red-500 hover:bg-red-500 hover:text-white hover:shadow-[0_0_18px_rgba(239,68,68,0.65),0_0_42px_rgba(239,68,68,0.35)] active:translate-y-1 active:border-red-500 active:bg-red-500 active:text-white"
         >
           <LogOut className="h-5 w-5" /> Sign Out
         </motion.button>
