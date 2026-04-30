@@ -555,9 +555,6 @@ function ResumeUpload({ go, fromDashboard = false, backTarget = null, resumes = 
         <TopNavButton onClick={() => go(backTarget || (fromDashboard ? "dashboard" : "login"))}>
           <ArrowLeft className="h-4 w-4 text-[#a0fe08]" /> Back
         </TopNavButton>
-        <TopNavButton onClick={() => go("dashboard")}>
-          Skip <ArrowRight className="h-4 w-4 text-[#a0fe08]" />
-        </TopNavButton>
       </div>
 
       <div className="mx-auto mb-6 w-fit"><GlassIcon><FileText className="h-8 w-8 text-white" /></GlassIcon></div>
