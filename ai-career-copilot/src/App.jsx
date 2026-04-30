@@ -567,7 +567,7 @@ function SignUp({ go }) {
   );
 }
 
-function ResumeUpload({ go, fromDashboard = false, backTarget = null, resumes = [], uploadQueue = [], onUploadResume = () => {}, onOpenResume = () => {}, onDeleteResume = () => {} }) {
+function ResumeUpload({ go, fromDashboard = false, backTarget = null, resumes = [], uploadQueue = [], onUploadResume = () => {}, onOpenResume = () => {}, onDeleteResume = () => {}, onContinueWithResume = () => {}, onSkipForNow = () => {} }) {
   const [uploaded, setUploaded] = useState(resumes.length > 0 || uploadQueue.length > 0);
   const fileInputRef = useRef(null);
 
@@ -658,14 +658,9 @@ function ResumeUpload({ go, fromDashboard = false, backTarget = null, resumes = 
           {uploadQueue.map((item) => (
             <ResumeUploadCard key={item.id} item={item} uploading />
           ))}
-          {resumes.slice(0, 3).map((resume) => (
+          {resumes.map((resume) => (
             <ResumeUploadCard key={resume.id} item={resume} onOpen={() => onOpenResume(resume, "resumeUpload")} onDelete={() => onDeleteResume(resume.id)} />
           ))}
-          {resumes.length > 3 && (
-            <button onClick={() => go("resumes")} className="w-full rounded-xl bg-[#ffffff] py-3 text-sm font-bold text-[#000100] transition hover:bg-[#eaeceb]">
-              View all {resumes.length} resumes
-            </button>
-          )}
         </div>
       )}
 
@@ -689,11 +684,11 @@ function ResumeUpload({ go, fromDashboard = false, backTarget = null, resumes = 
       <div className="mt-8 space-y-3">
         <PrimaryButton
           disabled={resumes.length === 0}
-          onClick={() => go("aiChatbot", null, "setPreferences")}
+          onClick={onContinueWithResume}
         >
           Continue with Resume <ArrowRight className="h-4 w-4" />
         </PrimaryButton>
-        <TopNavButton onClick={() => go("dashboard")} className="w-full py-3">Skip for now <ArrowRight className="h-4 w-4 text-[#a0fe08]" /></TopNavButton>
+        <TopNavButton onClick={onSkipForNow} className="w-full py-3">Skip for now <ArrowRight className="h-4 w-4 text-[#a0fe08]" /></TopNavButton>
       </div>
     </Screen></PhoneShell>
   );
@@ -2112,15 +2107,23 @@ export default function App() {
   const [dashboardFilter, setDashboardFilter] = useState("all");
   const [resumes, setResumes] = useState([]);
   const [uploadQueue, setUploadQueue] = useState([]);
+  const [uploadScreenResumes, setUploadScreenResumes] = useState([]);
+  const [uploadScreenQueue, setUploadScreenQueue] = useState([]);
   const [agentResumeJob, setAgentResumeJob] = useState({ status: "idle", notification: false, resumeName: "" });
   const [agentResumeNotice, setAgentResumeNotice] = useState(null);
   const uploadTimers = useRef([]);
+  const uploadScreenTimers = useRef([]);
   const agentResumeTimer = useRef(null);
   const resumesRef = useRef([]);
+  const uploadScreenResumesRef = useRef([]);
 
   useEffect(() => {
     resumesRef.current = resumes;
   }, [resumes]);
+
+  useEffect(() => {
+    uploadScreenResumesRef.current = uploadScreenResumes;
+  }, [uploadScreenResumes]);
 
   useEffect(() => {
     const splashTimer = setTimeout(() => setShowSplash(false), 2300);
@@ -2130,8 +2133,10 @@ export default function App() {
   useEffect(() => {
     return () => {
       uploadTimers.current.forEach((timer) => clearInterval(timer));
+      uploadScreenTimers.current.forEach((timer) => clearInterval(timer));
       if (agentResumeTimer.current) clearTimeout(agentResumeTimer.current);
       resumesRef.current.forEach((resume) => resume.url && URL.revokeObjectURL(resume.url));
+      uploadScreenResumesRef.current.forEach((resume) => resume.url && URL.revokeObjectURL(resume.url));
     };
   }, []);
 
@@ -2183,8 +2188,86 @@ export default function App() {
     });
   };
 
+  const handleUploadScreenResume = (files) => {
+    Array.from(files || []).forEach((file) => {
+      const id = `${file.name}-${file.lastModified}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const baseItem = {
+        id,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        progress: 0,
+        status: "uploading",
+        uploadedAt: new Date().toISOString(),
+      };
+
+      if (!isResumeFile(file) || file.size > 5 * 1024 * 1024) {
+        setUploadScreenQueue((prev) => [
+          { ...baseItem, status: "error", progress: 0, error: "Please upload a PDF, DOC, or DOCX file under 5MB." },
+          ...prev,
+        ]);
+        setTimeout(() => setUploadScreenQueue((prev) => prev.filter((item) => item.id !== id)), 3500);
+        return;
+      }
+
+      setUploadScreenQueue((prev) => [{ ...baseItem, progress: 8 }, ...prev]);
+
+      let progress = 8;
+      const timer = setInterval(() => {
+        progress = Math.min(100, progress + Math.floor(Math.random() * 16) + 8);
+        setUploadScreenQueue((prev) => prev.map((item) => item.id === id ? { ...item, progress, status: progress >= 100 ? "done" : "uploading" } : item));
+
+        if (progress >= 100) {
+          clearInterval(timer);
+          const resume = {
+            id,
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            uploadedAt: new Date().toISOString(),
+            url: URL.createObjectURL(file),
+          };
+          setUploadScreenResumes((prev) => [resume, ...prev]);
+          setTimeout(() => setUploadScreenQueue((prev) => prev.filter((item) => item.id !== id)), 800);
+        }
+      }, 260);
+
+      uploadScreenTimers.current.push(timer);
+    });
+  };
+
+  const clearUploadScreenDrafts = () => {
+    uploadScreenTimers.current.forEach((timer) => clearInterval(timer));
+    uploadScreenTimers.current = [];
+    setUploadScreenQueue([]);
+    setUploadScreenResumes((prev) => {
+      prev.forEach((resume) => resume.url && URL.revokeObjectURL(resume.url));
+      return [];
+    });
+  };
+
+  const handleContinueWithUploadScreenResume = () => {
+    if (uploadScreenResumes.length === 0) return;
+    uploadScreenTimers.current.forEach((timer) => clearInterval(timer));
+    uploadScreenTimers.current = [];
+    setUploadScreenQueue([]);
+    setResumes((prev) => [...uploadScreenResumes, ...prev]);
+    setUploadScreenResumes([]);
+    go("aiChatbot", null, "setPreferences");
+  };
+
+  const handleSkipResumeUpload = () => {
+    clearUploadScreenDrafts();
+    go("dashboard");
+  };
+
   const handleDeleteResume = (resumeId) => {
     setResumes((prev) => {
+      const target = prev.find((resume) => resume.id === resumeId);
+      if (target?.url) URL.revokeObjectURL(target.url);
+      return prev.filter((resume) => resume.id !== resumeId);
+    });
+    setUploadScreenResumes((prev) => {
       const target = prev.find((resume) => resume.id === resumeId);
       if (target?.url) URL.revokeObjectURL(target.url);
       return prev.filter((resume) => resume.id !== resumeId);
@@ -2259,7 +2342,7 @@ export default function App() {
       case "loginLoading": return <LoginLoadingScreen go={go} />;
       case "login": return <Login go={go} resumesCount={resumes.length} />;
       case "signup": return <SignUp go={go} />;
-      case "resumeUpload": return <ResumeUpload go={go} fromDashboard={hasReachedDashboard} backTarget={resumeUploadBackTarget} resumes={resumes} uploadQueue={uploadQueue} onUploadResume={handleUploadResume} onOpenResume={handleOpenResume} onDeleteResume={handleDeleteResume} />;
+      case "resumeUpload": return <ResumeUpload go={go} fromDashboard={hasReachedDashboard} backTarget={resumeUploadBackTarget} resumes={uploadScreenResumes} uploadQueue={uploadScreenQueue} onUploadResume={handleUploadScreenResume} onOpenResume={handleOpenResume} onDeleteResume={handleDeleteResume} onContinueWithResume={handleContinueWithUploadScreenResume} onSkipForNow={handleSkipResumeUpload} />;
       case "aiChatbot": return <AIChatbot key={`${chatMode}-${agentResumeNotice?.timestamp || "normal"}`} go={go} chatMode={chatMode} fromDashboard={hasReachedDashboard} backTarget={chatBackTarget} hideBottomNav={chatMode === "createResume" && chatBackTarget === "resumeUpload" && resumeUploadBackTarget === "login"} onStartBackgroundResume={handleStartBackgroundResume} agentResumeNotice={agentResumeNotice} />;
       case "setup": return <Setup go={go} />;
       case "resumeInput": return <ResumeInput go={go} />;
@@ -2283,7 +2366,7 @@ export default function App() {
       case "profile": return <Profile go={go} noNav appliedCount={appliedJobs.length} savedCount={savedJobs.length} jobsCount={jobs.length} resumesCount={resumes.length} />;
       default: return <Landing go={go} />;
     }
-  }, [screen, selectedJob, selectedResume, resumePreviewBackTarget, chatMode, chatBackTarget, resumeUploadBackTarget, agentResumeNotice, appliedJobs, savedJobs, hasReachedDashboard, dashboardFilter, resumes, uploadQueue]);
+  }, [screen, selectedJob, selectedResume, resumePreviewBackTarget, chatMode, chatBackTarget, resumeUploadBackTarget, agentResumeNotice, appliedJobs, savedJobs, hasReachedDashboard, dashboardFilter, resumes, uploadQueue, uploadScreenResumes, uploadScreenQueue]);
 
   const insideAppTransition = screen !== "landing";
   const hideFirstTimeCreateResumeNav = screen === "aiChatbot" && chatMode === "createResume" && chatBackTarget === "resumeUpload" && resumeUploadBackTarget === "login";
