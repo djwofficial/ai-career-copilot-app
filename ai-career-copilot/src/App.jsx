@@ -584,6 +584,8 @@ function ResumeUpload({ go, fromDashboard = false, backTarget = null, resumes = 
   };
 
   const latestResume = resumes[0];
+  const resumeCount = resumes.length;
+  const uploadResumeDescription = resumeCount === 0 ? "No resume yet" : resumeCount === 1 ? "I already have a resume" : `I already have ${resumeCount} resumes`;
 
   return (
     <PhoneShell><Screen>
@@ -609,7 +611,7 @@ function ResumeUpload({ go, fromDashboard = false, backTarget = null, resumes = 
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="font-bold text-[#000100]">Upload Resume</h3>
-          <p className="mt-1 text-xs text-[#666666]">I already have a resume (PDF, DOC, DOCX)</p>
+          <p className="mt-1 text-xs text-[#666666]">{uploadResumeDescription}</p>
           {latestResume && <p className="mt-2 truncate text-xs font-bold text-[#000100]">Selected: {latestResume.name}</p>}
         </div>
         {uploaded && <CheckCircle2 className="ml-auto h-5 w-5 shrink-0 text-[#a0fe08]" />}
