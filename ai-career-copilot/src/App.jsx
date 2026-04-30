@@ -37,6 +37,10 @@ import {
   Battery,
   Signal,
   Trash2,
+  Zap,
+  Target,
+  Globe,
+  DollarSign,
 } from "lucide-react";
 
 const jobs = [
@@ -1494,66 +1498,57 @@ function Dashboard({ go = () => {}, mini = false, appliedJobs = [], savedJobs = 
         </div>
       </div>
 
-      {/* Story-style Summary Banners */}
-      <div className="relative mb-4">
-        {/* Progress bars — Instagram story style */}
-        <div className="mb-2 flex gap-1">
-          {banners.map((_, i) => (
-            <button key={i} onClick={() => goToBanner(i)} className="relative h-[3px] flex-1 overflow-hidden rounded-full bg-[#d1d3d2]">
-              <div
-                key={`${i}-${progressKey}`}
-                className="absolute inset-y-0 left-0 rounded-full bg-[#000100]"
-                style={
-                  i < bannerIndex
-                    ? { width: "100%", transition: "none" }
-                    : i === bannerIndex
-                    ? { width: "100%", transition: `width ${BANNER_DURATION}ms linear`, animationDelay: "0ms" }
-                    : { width: "0%", transition: "none" }
-                }
-                ref={(el) => {
-                  if (el && i === bannerIndex) {
-                    el.style.width = "0%";
-                    requestAnimationFrame(() => { el.style.width = "100%"; });
-                  }
-                }}
-              />
-            </button>
-          ))}
-        </div>
-
-        {/* Banner carousel with smooth slide + drag support */}
-        <div
-          className="overflow-hidden rounded-2xl"
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={(e) => { onTouchEnd(); onBannerTap(e); }}
-          onClick={onBannerTap}
-        >
-          <div
-            className="flex"
-            style={{
-              transform: `translateX(calc(-${bannerIndex * 100}% + ${dragOffset}px))`,
-              transition: isDragging ? "none" : "transform 500ms cubic-bezier(0.22, 1, 0.36, 1)",
-            }}
-          >
-            {banners.map((b, i) => {
-              const BIcon = b.icon;
-              return (
-                <div key={i} className="flex min-w-full items-center gap-3 bg-[#000100] px-3.5 py-2.5 text-white">
-                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#a0fe08] text-[#000100]">
-                    <BIcon className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-xs font-bold">{b.title}</h3>
-                      <span className="rounded-full bg-[#a0fe08] px-1.5 py-0.5 text-[10px] font-bold leading-none text-[#000100]">{b.value}</span>
-                    </div>
-                    <p className="mt-0.5 text-[11px] leading-4 text-white/70">{b.desc}</p>
-                  </div>
-                </div>
-              );
-            })}
+      {/* AI Profile Summary */}
+      <Card className="mb-4">
+        <h3 className="text-sm font-bold text-[#000100]">AI Profile Summary</h3>
+        <div className="mt-3 flex flex-col gap-2 text-sm text-[#666666]">
+          <div className="flex justify-between"><span>Target Role</span><b className="text-[#000100]">Software Engineer</b></div>
+          <div className="flex justify-between"><span>Work Preferences</span><b className="text-[#000100]">Remote, All nation</b></div>
+          <div className="flex justify-between"><span>Salary Floor</span><b className="text-[#000100]">$50K–$80K</b></div>
+      <Card className="mb-4 overflow-hidden relative border-none bg-[#000100] text-white">
+        <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-[#a0fe08]/15 blur-[40px] rounded-full" />
+        <div className="relative z-10 p-1">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-1.5 w-1.5 rounded-full bg-[#a0fe08] animate-pulse" />
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50">Active AI Context</h3>
           </div>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+            {[
+              { label: "Target", value: "Software Engineer", icon: Target },
+              { label: "Style", value: "Remote / Hybrid", icon: Globe },
+              { label: "Floor", value: "$50K–$80K", icon: DollarSign },
+              { label: "Scope", value: "Nationwide", icon: MapPin },
+            ].map((item) => (
+              <div key={item.label} className="space-y-1">
+                <div className="flex items-center gap-1.5 opacity-50">
+                  <item.icon className="h-3 w-3" />
+                  <span className="text-[9px] uppercase font-bold tracking-wider">{item.label}</span>
+                </div>
+                <p className="text-xs font-bold leading-tight truncate">{item.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+
+      {/* Recent Updates */}
+      <div className="mb-5 flex items-start gap-3 rounded-2xl border border-[#d1d3d2] bg-[#ffffff] p-4">
+        <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#a0fe08]" />
+        <div>
+          <h3 className="text-sm font-bold text-[#000100]">New Match Found!</h3>
+          <p className="mt-1 text-xs text-[#666666]">We found 10 companies for you.</p>
+      {/* Agent update */}
+      <div className="mb-5 flex items-center gap-4 rounded-3xl border border-[#d1d3d2] bg-[#ffffff] p-4 shadow-[0_8px_20px_rgba(0,0,0,0.04)]">
+        <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#000100] text-[#a0fe08]">
+          <Zap className="h-5 w-5" fill="currentColor" />
+          <motion.div animate={{ scale: [1, 1.4, 1], opacity: [0.4, 0, 0.4] }} transition={{ duration: 2, repeat: Infinity }} className="absolute inset-0 rounded-2xl border-2 border-[#a0fe08]" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between mb-0.5">
+            <h3 className="text-sm font-black text-[#000100] tracking-tight">Agent Update</h3>
+            <span className="text-[10px] font-bold text-[#999999]">2m ago</span>
+          </div>
+          <p className="text-[13px] leading-tight font-medium text-[#666666] truncate">Found 10 new high-match companies</p>
         </div>
       </div>
 
