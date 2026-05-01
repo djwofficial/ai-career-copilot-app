@@ -2616,7 +2616,17 @@ function JobsScreen({
           className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#d1d3d2] bg-[#000100] px-4 py-2 text-xs font-bold text-white transition active:opacity-80"
         >
           <Filter className="h-3.5 w-3.5" />
-          Filter / All
+          Filter
+        </button>
+        <button
+          onClick={() => setDashboardFilter("all")}
+          className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition ${
+            dashboardFilter === "all"
+              ? "bg-[#000100] text-white"
+              : "border border-[#d1d3d2] bg-[#ffffff] text-[#000100]"
+          }`}
+        >
+          All
         </button>
         {filters.map((f) => {
           const FIcon = f.icon;
