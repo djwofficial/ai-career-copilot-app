@@ -37,6 +37,7 @@ import {
   Battery,
   Signal,
   Trash2,
+  Mic,
 } from "lucide-react";
 
 const jobs = [
@@ -196,7 +197,7 @@ const createSimplePdfBlob = (title, lines = []) => {
   const xrefStart = pdf.length;
   pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
   offsets.forEach((offset) => {
-    pdf += `${String(offset).padStart(10, "0")} 00000 n \n`;
+    pdf += `${String(offset).padStart(10, "0")} 0000 n \n`;
   });
   pdf += `trailer\n<< /Size ${
     objects.length + 1
@@ -279,6 +280,21 @@ const GlassIcon = ({ children, className = "" }) => (
   >
     {children}
   </div>
+);
+
+// Standardized Back Button Layout
+const BackButton = ({ onClick, className = "" }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`p-1 -ml-1 flex shrink-0 items-center justify-center transition active:opacity-60 ${className}`}
+    aria-label="Go back"
+  >
+    <ChevronLeft
+      className="h-[28px] w-[28px] text-[#000100]"
+      strokeWidth={2.5}
+    />
+  </button>
 );
 
 const PrimaryButton = ({
@@ -391,23 +407,32 @@ const Screen = ({
   children,
   nav,
   floatingNav,
+  floatingBottom,
   className = "",
   go = () => {},
   activeTab = "home",
-}) => (
-  <div className={`flex h-full min-h-0 flex-1 flex-col ${className}`}>
-    <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden no-scrollbar">
-      <div className={`px-6 pt-8 ${floatingNav ? "pb-28" : "pb-5"}`}>
-        {children}
+}) => {
+  let pbClass = "pb-5";
+  if (floatingBottom && floatingNav) pbClass = "pb-[180px]";
+  else if (floatingBottom) pbClass = "pb-28";
+  else if (floatingNav) pbClass = "pb-28";
+
+  return (
+    <div
+      className={`flex h-full min-h-0 flex-1 flex-col relative ${className}`}
+    >
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden no-scrollbar">
+        <div className={`px-6 pt-8 ${pbClass}`}>{children}</div>
       </div>
+      {floatingBottom}
+      {nav && (
+        <div className="px-6 pb-6 pt-2">
+          <BottomNav go={go} activeTab={activeTab} />
+        </div>
+      )}
     </div>
-    {nav && (
-      <div className="px-6 pb-6 pt-2">
-        <BottomNav go={go} activeTab={activeTab} />
-      </div>
-    )}
-  </div>
-);
+  );
+};
 
 function BottomNav({ go = () => {}, activeTab = "home" }) {
   const items = [
@@ -416,7 +441,7 @@ function BottomNav({ go = () => {}, activeTab = "home" }) {
     { icon: User, label: "Profile", key: "profile", target: "profile" },
   ];
   return (
-    <div className="flex w-full items-center rounded-full bg-[#000100] p-1.5">
+    <div className="flex w-full items-center rounded-full bg-[#000100] p-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.12)]">
       {items.map((item) => {
         const Icon = item.icon;
         const active = activeTab === item.key;
@@ -633,7 +658,7 @@ function Landing({ go }) {
 }
 
 function Login({ go, resumesCount = 0 }) {
-  const nextAfterLogin = resumesCount === 0 ? "resumeUpload" : "dashboard";
+  const nextAfterLogin = "dashboard";
 
   return (
     <PhoneShell>
@@ -751,7 +776,7 @@ function SignUp({ go }) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const handleSubmit = (e) => {
     e.preventDefault();
-    go("resumeUpload");
+    go("dashboard");
   };
   return (
     <PhoneShell>
@@ -804,10 +829,10 @@ function SignUp({ go }) {
               <span className="h-px flex-1 bg-[#d1d3d2]" />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <SecondaryButton onClick={() => go("resumeUpload")}>
+              <SecondaryButton onClick={() => go("dashboard")}>
                 Google
               </SecondaryButton>
-              <SecondaryButton onClick={() => go("resumeUpload")}>
+              <SecondaryButton onClick={() => go("dashboard")}>
                 Demo Mode
               </SecondaryButton>
             </div>
@@ -823,133 +848,6 @@ function SignUp({ go }) {
             </button>
           </p>
         </form>
-      </Screen>
-    </PhoneShell>
-  );
-}
-
-function ResumeUpload({
-  go,
-  fromDashboard = false,
-  backTarget = null,
-  resumes = [],
-  uploadQueue = [],
-  onUploadResume = () => {},
-  onOpenResume = () => {},
-  onDeleteResume = () => {},
-  onContinueWithResume = () => {},
-  onSkipForNow = () => {},
-}) {
-  const fileInputRef = useRef(null);
-
-  const handleFiles = (fileList) => {
-    const files = Array.from(fileList || []);
-    if (!files.length) return;
-    onUploadResume(files);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  const handleDrop = (event) => {
-    event.preventDefault();
-    handleFiles(event.dataTransfer.files);
-  };
-
-  return (
-    <PhoneShell>
-      <Screen>
-        {/* Back / Skip header */}
-        <div className="mb-4 mt-4 flex items-center justify-between">
-          <TopNavButton
-            onClick={() =>
-              go(backTarget || (fromDashboard ? "dashboard" : "login"))
-            }
-          >
-            <ArrowLeft className="h-4 w-4 text-[#a0fe08]" /> Back
-          </TopNavButton>
-        </div>
-
-        <div
-          className="flex-1 overflow-y-auto no-scrollbar pb-4"
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={handleDrop}
-        >
-          <div className="mx-auto mb-4 w-fit">
-            <GlassIcon>
-              <FileText className="h-8 w-8 text-white" />
-            </GlassIcon>
-          </div>
-          <h1 className="mb-8 text-center text-xl font-bold tracking-tight text-[#000100]">
-            Your Resume
-          </h1>
-
-          {/* Clean Dashboard Theme Action Squares */}
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="group flex aspect-square flex-col items-center justify-center rounded-3xl border border-[#d1d3d2] bg-[#ffffff] p-4 shadow-sm transition active:scale-95 hover:bg-[#fafafa]"
-            >
-              <div className="mb-3 grid h-14 w-14 place-items-center rounded-full bg-[#eaeceb] text-[#000100] transition-colors group-hover:bg-[#000100] group-hover:text-white">
-                <Upload className="h-6 w-6" />
-              </div>
-              <span className="text-sm font-bold text-[#000100]">
-                Upload PDF
-              </span>
-            </button>
-
-            <button
-              onClick={() => go("aiChatbot", null, "createResume")}
-              className="group flex aspect-square flex-col items-center justify-center rounded-3xl border border-[#d1d3d2] bg-[#ffffff] p-4 shadow-sm transition active:scale-95 hover:bg-[#fafafa]"
-            >
-              <div className="mb-3 grid h-14 w-14 place-items-center rounded-full bg-[#eaeceb] text-[#000100] transition-colors group-hover:bg-[#000100] group-hover:text-white">
-                <PenLine className="h-6 w-6" />
-              </div>
-              <span className="text-sm font-bold text-[#000100]">AI Build</span>
-            </button>
-          </div>
-
-          {/* Hidden File Input */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            className="hidden"
-            onChange={(e) => handleFiles(e.target.files)}
-          />
-
-          {/* Uploaded List */}
-          {(uploadQueue.length > 0 || resumes.length > 0) && (
-            <div className="space-y-4">
-              {uploadQueue.map((item) => (
-                <ResumeUploadCard key={item.id} item={item} uploading />
-              ))}
-              {resumes.map((resume) => (
-                <ResumeUploadCard
-                  key={resume.id}
-                  item={resume}
-                  onOpen={() => onOpenResume(resume, "resumeUpload")}
-                  onDelete={() => onDeleteResume(resume.id)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Footer Controls */}
-        <div className="mt-auto shrink-0 pt-4 flex flex-col gap-3">
-          <PrimaryButton
-            disabled={resumes.length === 0}
-            onClick={onContinueWithResume}
-            className="w-full py-4 text-[15px]"
-          >
-            Continue
-          </PrimaryButton>
-          <button
-            onClick={onSkipForNow}
-            className="w-full py-2 text-sm font-bold text-[#666666] transition active:opacity-70"
-          >
-            Skip for now
-          </button>
-        </div>
       </Screen>
     </PhoneShell>
   );
@@ -1029,6 +927,9 @@ function AIChatbot({
   hideBottomNav = false,
   onStartBackgroundResume = () => {},
   agentResumeNotice = null,
+  resumes = [],
+  onUploadResume = () => {},
+  uploadQueue = [],
 }) {
   const prefQuestions = [
     "What kind of job are you looking for? (e.g. UX Designer, Frontend Developer, Product Manager)",
@@ -1151,7 +1052,7 @@ function AIChatbot({
         messages: [
           {
             from: "ai",
-            text: "Hi! I'm Syncra AI. How can I help you today? You can ask me about jobs, resumes, career advice, or anything else.",
+            text: "Hi, Syncra AI, can I help you find new jobs or update your resume today?",
           },
         ],
         step: 0,
@@ -1193,6 +1094,17 @@ function AIChatbot({
   );
   const [helpWriteAnswers, setHelpWriteAnswers] = useState([]);
   const [typeItOutActive, setTypeItOutActive] = useState(false);
+  const [isAttachModalOpen, setIsAttachModalOpen] = useState(false);
+  const fileInputRef = useRef(null);
+  const [attachedContext, setAttachedContext] = useState(null);
+
+  const handleFiles = (fileList) => {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    onUploadResume(files);
+    setIsAttachModalOpen(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   useEffect(() => {
     const scrollContainer = messagesScrollRef.current;
@@ -1529,130 +1441,372 @@ function AIChatbot({
 
   return (
     <PhoneShell>
-      <div
-        className={`flex h-full min-h-0 flex-1 flex-col px-6 pt-8 ${
-          hideBottomNav ? "pb-6" : "pb-28"
-        }`}
-      >
+      <div className="flex h-full min-h-0 flex-1 flex-col bg-[#eaeceb] pb-6">
         {/* Fixed top area */}
-        <div className="shrink-0">
-          <div className="mb-4 mt-4 flex items-center justify-between">
-            <TopNavButton
-              onClick={() =>
-                go(backTarget || (fromDashboard ? "dashboard" : "resumeUpload"))
-              }
-            >
-              <ArrowLeft className="h-4 w-4 text-[#a0fe08]" /> Back
-            </TopNavButton>
-            {!isChatOpen && (
-              <TopNavButton onClick={() => go("dashboard")}>
-                Skip <ArrowRight className="h-4 w-4 text-[#a0fe08]" />
-              </TopNavButton>
-            )}
-          </div>
-
-          <div className="mb-4 flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-full bg-[#000100] text-lg text-white">
-              🤖
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-[#000100]">Syncra AI</h2>
-              <p className="text-xs font-medium text-[#a0fe08]">
-                Online ·{" "}
-                {isChatOpen
-                  ? "Chat"
-                  : chatMode === "createResume"
-                  ? "Building Resume"
-                  : "Setting Preferences"}
-              </p>
-            </div>
-            <div className="ml-auto">
-              <StepPill>
-                {chatMode === "createResume" ? "Resume" : "Preferences"}
-              </StepPill>
-            </div>
-          </div>
-        </div>
-
-        {/* Scrollable message area */}
-        <div
-          ref={messagesScrollRef}
-          className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden no-scrollbar py-2 pr-1"
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="shrink-0 mb-5 flex min-h-[88px] items-center justify-between relative z-10 bg-[#eaeceb] px-6 pt-[52px] pb-3"
         >
-          <div className="space-y-3 pb-4">
-            {messages.map((msg, i) => (
-              <motion.div
-                key={`${msg.from}-${i}-${msg.text.slice(0, 12)}`}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-                className={
-                  msg.from === "ai"
-                    ? "max-w-[85%] rounded-2xl rounded-tl-sm border border-[#d1d3d2] bg-[#ffffff] p-4 text-sm leading-6 text-[#000100]"
-                    : "ml-auto max-w-[85%] rounded-2xl rounded-tr-sm bg-[#000100] p-4 text-sm leading-6 text-white"
-                }
-              >
-                {renderMessageText(msg.text)}
-              </motion.div>
-            ))}
+          <BackButton
+            onClick={() =>
+              go(backTarget || (fromDashboard ? "dashboard" : "login"))
+            }
+          />
 
-            {isTyping && (
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex w-fit max-w-[75%] items-center gap-2 rounded-2xl rounded-tl-sm border border-[#d1d3d2] bg-[#ffffff] p-4 text-sm text-[#666666]"
-              >
-                <span className="h-2 w-2 animate-bounce rounded-full bg-[#000100]" />
-                <span className="h-2 w-2 animate-bounce rounded-full bg-[#000100] [animation-delay:120ms]" />
-                <span className="h-2 w-2 animate-bounce rounded-full bg-[#000100] [animation-delay:240ms]" />
-                <span className="ml-1 text-xs text-[#666666]">
-                  Syncra is working
-                </span>
-              </motion.div>
-            )}
-            <div ref={messagesEndRef} />
+          <div className="flex items-center gap-2 rounded-full border border-white/40 bg-white/60 backdrop-blur-md px-4 py-2 shadow-sm">
+            <span className="text-xs font-bold text-[#000100]">
+              Syncra AI 2.5 Pro
+            </span>
           </div>
-        </div>
+
+          {!isChatOpen ? (
+            <button
+              onClick={() => go("dashboard")}
+              className="flex h-9 items-center gap-1.5 rounded-full border border-[#d1d3d2] bg-[#ffffff] px-4 text-xs font-bold text-[#000100] shadow-sm transition active:opacity-70"
+            >
+              Skip <ArrowRight className="h-3.5 w-3.5 text-[#000100]" />
+            </button>
+          ) : (
+            <button className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/40 bg-white/60 text-[#000100] shadow-sm backdrop-blur-md transition active:scale-95">
+              <Settings className="h-5 w-5" />
+            </button>
+          )}
+        </motion.div>
+
+        {/* Scrollable message area OR Empty State Orb */}
+        {isChatOpen &&
+        messages.length === 1 &&
+        !isTyping &&
+        messages[0].from === "ai" ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 0.05 }}
+            className="flex min-h-0 flex-1 flex-col items-center justify-center px-4 text-center pb-12"
+          >
+            <motion.div
+              animate={{
+                boxShadow: [
+                  "0 0 0px rgba(160,254,8,0)",
+                  "0 0 50px rgba(160,254,8,0.25)",
+                  "0 0 0px rgba(160,254,8,0)",
+                ],
+              }}
+              transition={{
+                duration: 3.5,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="relative mb-8 grid h-32 w-32 place-items-center rounded-full bg-[#000100] shadow-xl"
+            >
+              <div className="absolute inset-1.5 rounded-full border border-white/10 bg-gradient-to-tr from-white/10 to-transparent" />
+              <Star className="relative z-10 h-10 w-10 text-[#a0fe08]" />
+              <Sparkles className="absolute right-6 top-6 h-5 w-5 text-white" />
+            </motion.div>
+            <h2 className="text-[22px] font-bold leading-snug tracking-tight text-[#000100]">
+              {messages[0].text}
+            </h2>
+          </motion.div>
+        ) : (
+          <div
+            ref={messagesScrollRef}
+            className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden no-scrollbar px-5 py-4"
+          >
+            <div className="flex flex-col pb-4">
+              {messages.map((msg, i) => {
+                const isAI = msg.from === "ai";
+                const isNextSame = messages[i + 1]?.from === msg.from;
+                const isPrevSame = messages[i - 1]?.from === msg.from;
+
+                return (
+                  <motion.div
+                    key={`${msg.from}-${i}-${msg.text.slice(0, 12)}`}
+                    initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                    className={`flex w-full ${
+                      isAI ? "justify-start" : "justify-end"
+                    } ${isNextSame ? "mb-1.5" : "mb-5"}`}
+                  >
+                    {isAI && (
+                      <div className="mr-2.5 flex w-7 shrink-0 flex-col justify-end pb-0.5">
+                        {!isNextSame && (
+                          <div className="grid h-7 w-7 place-items-center rounded-full bg-[#000100] shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
+                            <Star className="h-3.5 w-3.5 text-[#a0fe08]" />
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div
+                      className={`max-w-[78%] px-4 py-3 text-[14.5px] leading-[1.55] shadow-sm ${
+                        isAI
+                          ? `border border-white/60 bg-[#ffffff] text-[#000100] ${
+                              isPrevSame && isNextSame
+                                ? "rounded-[20px] rounded-l-sm"
+                                : isPrevSame
+                                ? "rounded-[22px] rounded-tl-sm rounded-bl-[4px]"
+                                : isNextSame
+                                ? "rounded-[22px] rounded-bl-sm"
+                                : "rounded-[22px] rounded-bl-[4px]"
+                            }`
+                          : `bg-[#000100] text-white ${
+                              isPrevSame && isNextSame
+                                ? "rounded-[20px] rounded-r-sm"
+                                : isPrevSame
+                                ? "rounded-[22px] rounded-tr-sm rounded-br-[4px]"
+                                : isNextSame
+                                ? "rounded-[22px] rounded-br-sm"
+                                : "rounded-[22px] rounded-br-[4px]"
+                            }`
+                      }`}
+                    >
+                      {renderMessageText(msg.text)}
+                    </div>
+                  </motion.div>
+                );
+              })}
+
+              {isTyping && (
+                <motion.div
+                  initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  className="mb-5 flex w-full justify-start"
+                >
+                  <div className="mr-2.5 flex w-7 shrink-0 flex-col justify-end pb-0.5">
+                    <div className="grid h-7 w-7 place-items-center rounded-full bg-[#000100] shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
+                      <Star className="h-3.5 w-3.5 text-[#a0fe08]" />
+                    </div>
+                  </div>
+
+                  <div className="flex h-[44px] items-center gap-1.5 rounded-[22px] rounded-bl-[4px] border border-white/60 bg-[#ffffff] px-4 shadow-sm">
+                    <motion.span
+                      animate={{ y: [0, -3, 0], opacity: [0.4, 1, 0.4] }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 1,
+                        ease: "easeInOut",
+                      }}
+                      className="h-1.5 w-1.5 rounded-full bg-[#000100]"
+                    />
+                    <motion.span
+                      animate={{ y: [0, -3, 0], opacity: [0.4, 1, 0.4] }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 1,
+                        ease: "easeInOut",
+                        delay: 0.2,
+                      }}
+                      className="h-1.5 w-1.5 rounded-full bg-[#000100]"
+                    />
+                    <motion.span
+                      animate={{ y: [0, -3, 0], opacity: [0.4, 1, 0.4] }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 1,
+                        ease: "easeInOut",
+                        delay: 0.4,
+                      }}
+                      className="h-1.5 w-1.5 rounded-full bg-[#000100]"
+                    />
+                  </div>
+                </motion.div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+        )}
 
         {/* Fixed bottom composer */}
-        <div className="shrink-0 border-t border-[#d1d3d2] pt-3">
-          {quickReplies.length > 0 && (
-            <div className="mb-3 flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-              {quickReplies.map((q) => (
-                <button
-                  key={q}
-                  onClick={() => handleQuickReply(q)}
-                  disabled={isTyping}
-                  className="shrink-0 rounded-full border border-[#d1d3d2] bg-[#ffffff] px-4 py-2 text-xs font-bold text-[#000100] transition active:bg-[#eaeceb] disabled:cursor-not-allowed disabled:opacity-40"
+        <div className="relative z-20 shrink-0 bg-gradient-to-t from-[#eaeceb] via-[#eaeceb] to-transparent px-4 sm:px-6 pb-0 pt-2">
+          {/* Upload Queue Indicators */}
+          {uploadQueue.length > 0 && (
+            <div className="mb-2 flex flex-col gap-2">
+              {uploadQueue.map((item) => (
+                <div
+                  key={item.id}
+                  className="inline-flex w-fit items-center gap-2 rounded-full border border-[#d1d3d2] bg-[#ffffff] px-3 py-1.5 text-xs font-bold text-[#000100] shadow-sm"
                 >
-                  {q}
-                </button>
+                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-[#000100] border-t-transparent" />
+                  Uploading {item.name}...
+                </div>
               ))}
             </div>
           )}
 
-          <div className="rounded-full border border-[#d1d3d2] bg-[#ffffff] p-2">
-            <div className="flex items-center gap-2 rounded-full bg-transparent px-2 py-1 text-sm">
-              <input
-                type="text"
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                placeholder={
-                  isTyping ? "Syncra is thinking..." : "Type your answer..."
-                }
+          {attachedContext && (
+            <div className="mb-2 px-2">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#000100] bg-[#ffffff] px-3 py-1.5 text-xs font-bold text-[#000100] shadow-sm">
+                <FileText className="h-3.5 w-3.5" />
+                <span className="max-w-[150px] truncate">
+                  {attachedContext.name}
+                </span>
+                <button
+                  onClick={() => setAttachedContext(null)}
+                  className="ml-1 rounded-full p-0.5 transition hover:bg-[#eaeceb]"
+                >
+                  <Plus className="h-3.5 w-3.5 rotate-45" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {quickReplies.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 15, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: "auto" }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="mb-3 flex gap-2 overflow-x-auto px-1 pb-1 no-scrollbar"
+            >
+              {quickReplies.map((q) => {
+                let Icon = null;
+                const lowerQ = q.toLowerCase();
+                if (lowerQ.includes("jobs") || lowerQ.includes("search"))
+                  Icon = Search;
+                else if (
+                  lowerQ.includes("resume") ||
+                  lowerQ.includes("linkedin")
+                )
+                  Icon = FileText;
+                else if (lowerQ.includes("advice")) Icon = Sparkles;
+                else if (lowerQ.includes("salary") || lowerQ.includes("market"))
+                  Icon = BarChart3;
+                else if (lowerQ.includes("type")) Icon = PenLine;
+                else Icon = InfinityIcon;
+
+                return (
+                  <button
+                    key={q}
+                    onClick={() => handleQuickReply(q)}
+                    disabled={isTyping}
+                    className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#d1d3d2] bg-white/60 px-4 py-2.5 text-xs font-bold text-[#000100] shadow-sm backdrop-blur-md transition active:bg-[#eaeceb] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {Icon && <Icon className="h-3.5 w-3.5" />}
+                    {q}
+                  </button>
+                );
+              })}
+            </motion.div>
+          )}
+
+          <div className="flex items-end gap-2">
+            <div className="flex flex-1 items-center gap-2 rounded-3xl border border-white/40 bg-white/70 backdrop-blur-2xl p-2 shadow-[0_12px_40px_rgba(0,0,0,0.12)] focus-within:border-[#000100] focus-within:ring-1 focus-within:ring-[#000100]">
+              <button
+                onClick={() => setIsAttachModalOpen(true)}
                 disabled={isTyping}
-                className="w-full flex-1 bg-transparent text-[#000100] outline-none placeholder:text-[#999999] disabled:cursor-not-allowed"
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#eaeceb] text-[#000100] transition active:opacity-70 disabled:opacity-50"
+              >
+                <Plus className="h-5 w-5" />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                className="hidden"
+                onChange={(e) => handleFiles(e.target.files)}
               />
+              <div className="flex flex-1 items-center gap-2 overflow-hidden">
+                <input
+                  type="text"
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                  placeholder={
+                    isTyping
+                      ? "Syncra is thinking..."
+                      : "Ask Syncra anything..."
+                  }
+                  disabled={isTyping}
+                  className="w-full min-w-0 bg-transparent px-1 text-sm font-medium text-[#000100] outline-none placeholder:text-[#999999] disabled:cursor-not-allowed"
+                />
+              </div>
               <button
                 onClick={handleSend}
                 disabled={isTyping || !inputText.trim()}
-                className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#000100] text-white transition active:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#000100] text-white transition active:scale-95 disabled:opacity-40"
               >
                 <Send className="h-4 w-4" />
               </button>
             </div>
           </div>
+
+          {/* Attachment Bottom Sheet Modal */}
+          <AnimatePresence>
+            {isAttachModalOpen && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setIsAttachModalOpen(false)}
+                  className="absolute inset-0 z-[100] bg-[#000100]/40 backdrop-blur-[2px]"
+                />
+
+                <motion.div
+                  initial={{ y: "100%" }}
+                  animate={{ y: 0 }}
+                  exit={{ y: "100%" }}
+                  transition={{ type: "spring", damping: 26, stiffness: 320 }}
+                  className="absolute bottom-0 left-0 right-0 z-[101] flex flex-col rounded-t-[2rem] bg-[#eaeceb] shadow-[0_-8px_30px_rgba(0,0,0,0.12)] pb-8"
+                >
+                  <div className="flex shrink-0 items-center justify-between border-b border-[#d1d3d2] px-6 py-5">
+                    <h2 className="text-lg font-bold text-[#000100]">
+                      Add Attachment
+                    </h2>
+                    <button
+                      onClick={() => setIsAttachModalOpen(false)}
+                      className="grid h-8 w-8 place-items-center rounded-full bg-[#d1d3d2] text-[#000100] transition active:opacity-70"
+                    >
+                      <Plus className="h-5 w-5 rotate-45" />
+                    </button>
+                  </div>
+
+                  <div className="p-6 flex flex-col gap-4">
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex items-center gap-4 rounded-2xl bg-[#ffffff] border border-[#d1d3d2] p-4 transition active:bg-[#fafafa]"
+                    >
+                      <div className="grid h-12 w-12 place-items-center rounded-full bg-[#eaeceb] text-[#000100]">
+                        <Upload className="h-5 w-5" />
+                      </div>
+                      <div className="text-left flex-1">
+                        <h3 className="text-sm font-bold text-[#000100]">
+                          Upload Resume
+                        </h3>
+                        <p className="text-xs text-[#666666] mt-0.5">
+                          PDF, DOC up to 5MB
+                        </p>
+                      </div>
+                    </button>
+
+                    {resumes.length > 0 && (
+                      <button
+                        onClick={() => {
+                          setAttachedContext(resumes[0]);
+                          setIsAttachModalOpen(false);
+                        }}
+                        className="flex items-center gap-4 rounded-2xl bg-[#ffffff] border border-[#d1d3d2] p-4 transition active:bg-[#fafafa]"
+                      >
+                        <div className="grid h-12 w-12 place-items-center rounded-full bg-[#eaeceb] text-[#000100]">
+                          <FileText className="h-5 w-5" />
+                        </div>
+                        <div className="text-left flex-1">
+                          <h3 className="text-sm font-bold text-[#000100]">
+                            Use Existing Resume
+                          </h3>
+                          <p className="text-xs text-[#666666] mt-0.5">
+                            {resumes[0].name}
+                          </p>
+                        </div>
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </PhoneShell>
@@ -1673,6 +1827,9 @@ function Setup({ go }) {
   return (
     <PhoneShell>
       <Screen>
+        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
+          <BackButton onClick={() => go("landing")} />
+        </div>
         <div className="mx-auto mb-6 w-fit">
           <GlassIcon>
             <Star className="h-9 w-9 fill-[#a0fe08] text-[#a0fe08]" />
@@ -1696,60 +1853,11 @@ function Setup({ go }) {
           ))}
         </div>
         <div className="mt-6 space-y-3">
-          <PrimaryButton onClick={() => go("resumeInput")}>
+          <PrimaryButton onClick={() => go("dashboard")}>
             Continue <ArrowRight className="h-4 w-4" />
           </PrimaryButton>
           <SecondaryButton onClick={() => go("story")}>
             Let AI help me fill this <Sparkles className="h-4 w-4" />
-          </SecondaryButton>
-          <TopNavButton
-            onClick={() => go("resumeInput")}
-            className="w-full py-3"
-          >
-            Skip for now <ArrowRight className="h-4 w-4 text-[#a0fe08]" />
-          </TopNavButton>
-        </div>
-      </Screen>
-    </PhoneShell>
-  );
-}
-
-function ResumeInput({ go }) {
-  return (
-    <PhoneShell>
-      <Screen>
-        <div className="mx-auto mb-8 w-fit">
-          <GlassIcon>
-            <Star className="h-9 w-9 fill-[#a0fe08] text-[#a0fe08]" />
-          </GlassIcon>
-        </div>
-        <p className="text-xs text-[#666666]">Step 2 of 2</p>
-        <h1 className="mt-2 text-xl font-bold text-[#000100]">
-          Upload your resume
-        </h1>
-        <p className="mt-2 text-sm text-[#666666]">
-          Drop your PDF and we&apos;ll match you with the right roles.
-        </p>
-        <button
-          onClick={() => go("builder")}
-          className={`mt-8 flex h-40 w-full flex-col items-center justify-center rounded-3xl border-2 border-dashed border-[#d1d3d2] bg-[#ffffff] text-[#000100] ${neoIn} `}
-        >
-          <div
-            className={`mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-[#eaeceb] ${neoOut}`}
-          >
-            <Upload className="h-7 w-7" />
-          </div>
-          <span className="text-sm font-bold">Tap to upload PDF</span>
-          <span className="mt-1 text-xs text-[#666666]">
-            or drag & drop here
-          </span>
-        </button>
-        <div className="mt-8 space-y-3">
-          <PrimaryButton onClick={() => go("builder")}>
-            Continue <ArrowRight className="h-4 w-4" />
-          </PrimaryButton>
-          <SecondaryButton onClick={() => go("story")}>
-            Tell Your Story <InfinityIcon className="h-4 w-4" />
           </SecondaryButton>
           <TopNavButton onClick={() => go("dashboard")} className="w-full py-3">
             Skip for now <ArrowRight className="h-4 w-4 text-[#a0fe08]" />
@@ -1770,7 +1878,13 @@ function Story({ go }) {
   return (
     <PhoneShell>
       <Screen>
-        <div className="mb-6 mt-4 flex items-center justify-between">
+        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
+          <BackButton onClick={() => go("dashboard")} />
+          <TopNavButton onClick={() => go("dashboard")}>
+            Skip <ArrowRight className="h-4 w-4 text-[#a0fe08]" />
+          </TopNavButton>
+        </div>
+        <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
               className={`grid h-10 w-10 place-items-center rounded-full border border-[#d1d3d2] bg-[#000100] text-lg ${neoOut}`}
@@ -1782,9 +1896,6 @@ function Story({ go }) {
               <p className="text-xs text-[#000100]">Online · Step 1 of 6</p>
             </div>
           </div>
-          <TopNavButton onClick={() => go("dashboard")}>
-            Skip <ArrowRight className="h-4 w-4 text-[#a0fe08]" />
-          </TopNavButton>
         </div>
         <div className="space-y-3">
           <div
@@ -1847,6 +1958,9 @@ function Builder({ go }) {
   return (
     <PhoneShell>
       <Screen>
+        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
+          <BackButton onClick={() => go("dashboard")} />
+        </div>
         <Header
           title="AI Resume Builder"
           subtitle="Syncra AI is working"
@@ -1921,6 +2035,9 @@ function Analysis({ go }) {
   return (
     <PhoneShell>
       <Screen>
+        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
+          <BackButton onClick={() => go("dashboard")} />
+        </div>
         <Header
           title="Resume Analysis"
           subtitle="Score and improvement plan"
@@ -1983,6 +2100,9 @@ function Skill({ go }) {
   return (
     <PhoneShell>
       <Screen>
+        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
+          <BackButton onClick={() => go("analysis")} />
+        </div>
         <Header
           title="Skill Market Analysis"
           subtitle="Compare skills with market demand"
@@ -2105,8 +2225,21 @@ function Dashboard({
   resumes = [],
   selectedResumeId = null,
   onSelectResume = () => {},
+  isChatTransition = false,
+  onStartChatTransition = () => {},
+  onUploadResume = () => {},
+  uploadQueue = [],
 }) {
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleFiles = (fileList) => {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    onUploadResume(files);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const selectedResume =
     resumes.find((resume) => resume.id === selectedResumeId) || null;
   const activeSelectedResumeId = selectedResumeId;
@@ -2137,187 +2270,206 @@ function Dashboard({
     },
   ];
 
+  const floatingAiInput = (
+    <motion.div
+      initial={false}
+      animate={{
+        bottom: isChatTransition ? "24px" : "92px",
+        left: isChatTransition ? "16px" : "24px",
+        right: isChatTransition ? "16px" : "24px",
+      }}
+      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+      className="absolute z-50"
+    >
+      <div className="flex items-center gap-2 rounded-3xl border border-white/40 bg-white/70 backdrop-blur-2xl p-2 shadow-[0_12px_40px_rgba(0,0,0,0.12)] focus-within:border-[#000100] focus-within:ring-1 focus-within:ring-[#000100]">
+        <button
+          onClick={() => {
+            if (resumes.length === 0) {
+              fileInputRef.current?.click();
+              return;
+            }
+            setIsResumeModalOpen(true);
+          }}
+          disabled={isChatTransition}
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#eaeceb] text-[#000100] transition active:opacity-70 disabled:opacity-50"
+          title={resumes.length === 0 ? "Upload Resume" : "Select Resume"}
+        >
+          <Plus className="h-5 w-5" />
+        </button>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          className="hidden"
+          onChange={(e) => handleFiles(e.target.files)}
+        />
+
+        <div className="flex flex-1 items-center gap-2 overflow-hidden">
+          {selectedResume && !isChatTransition && (
+            <div
+              onClick={() => setIsResumeModalOpen(true)}
+              className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-[#d1d3d2] bg-[#fafafa] px-2.5 py-1.5 transition active:bg-[#eaeceb]"
+            >
+              <FileText className="h-3.5 w-3.5 text-[#000100]" />
+              <span className="max-w-[70px] truncate text-xs font-bold text-[#000100]">
+                {selectedResume.name.replace(/\.pdf$/i, "")}
+              </span>
+            </div>
+          )}
+          <input
+            type="text"
+            readOnly
+            onClick={onStartChatTransition}
+            placeholder={
+              selectedResume && !isChatTransition
+                ? "Set your agent goals..."
+                : "Ask Syncra anything..."
+            }
+            className="w-full min-w-0 cursor-pointer bg-transparent px-1 text-sm font-medium text-[#000100] outline-none placeholder:text-[#999999]"
+          />
+        </div>
+
+        <button
+          onClick={onStartChatTransition}
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#000100] text-white transition active:scale-95"
+        >
+          <Send className="h-4 w-4" />
+        </button>
+      </div>
+    </motion.div>
+  );
+
   return (
     <Screen
       nav={!mini && !noNav}
       floatingNav={noNav}
+      floatingBottom={!mini ? floatingAiInput : null}
       go={go}
       activeTab="home"
       className="relative"
     >
-      {/* Header with profile + notification */}
-      <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-[#eaeceb] px-6 pb-3 pt-12">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => go("profile")}
-            className="grid h-8 w-8 place-items-center rounded-full bg-[#000100] text-white"
-          >
-            <span className="text-sm">🪙</span>
-          </button>
-          <div className="flex items-center gap-0.5 text-base font-black tracking-tight text-[#000100]">
-            syncra
-          </div>
-        </div>
-        <div className="flex items-center overflow-hidden rounded-full bg-[#000100]">
-          <button
-            onClick={() => go("resumeUpload")}
-            className="grid h-9 w-10 place-items-center text-white transition active:opacity-70"
-          >
-            <Plus className="h-[18px] w-[18px]" strokeWidth={1.8} />
-          </button>
-          <div className="h-4 w-px bg-white/20" />
-          <div className="relative">
-            <button className="grid h-9 w-10 place-items-center text-white transition active:opacity-70">
-              <Bell className="h-[18px] w-[18px]" strokeWidth={1.8} />
-            </button>
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#a0fe08]" />
-          </div>
-        </div>
-      </div>
-
-      {/* AI Profile Summary */}
-      <Card className="mb-6 border-none shadow-sm">
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-[#000100]">
-            AI Profile Summary
-          </h2>
-        </div>
-
-        <div className="mb-4">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-[#999999]">
-            Target Role
-          </p>
-          <p className="text-base font-bold text-[#000100]">
-            Senior Product Designer
-          </p>
-        </div>
-
-        <div className="mb-4">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-[#999999]">
-            Work Preference
-          </p>
-          <p className="text-base font-bold text-[#000100]">New York, NY</p>
-        </div>
-
-        <div className="mb-5">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-[#999999]">
-            Salary Floor
-          </p>
-          <p className="text-base font-bold text-[#000100]">$150,000</p>
-        </div>
-
-        <div className="mb-5 h-px w-full bg-[#eaeceb]" />
-
-        <div className="flex flex-wrap gap-2">
-          {["UX Research", "Visual Design", "System Thinking"].map((pill) => (
-            <span
-              key={pill}
-              className="rounded-full bg-[#f4f5f4] px-3 py-1.5 text-[10px] font-bold tracking-wide text-[#666666]"
+      <motion.div
+        animate={{
+          opacity: isChatTransition ? 0 : 1,
+          y: isChatTransition ? -30 : 0,
+          filter: isChatTransition ? "blur(4px)" : "blur(0px)",
+        }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        className="flex-1"
+      >
+        {/* Header with profile */}
+        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => go("profile")}
+              className="grid h-12 w-12 place-items-center rounded-full bg-[#000100] text-white shadow-sm transition active:opacity-80"
             >
-              {pill.toUpperCase()}
-            </span>
-          ))}
+              <span className="text-2xl">🪙</span>
+            </button>
+            <div className="text-2xl font-black tracking-tight text-[#000100]">
+              syncra
+            </div>
+          </div>
         </div>
-      </Card>
 
-      {/* AI Agent Goal Input */}
-      <div className="mb-8">
-        <h2 className="mb-3 text-lg font-bold text-[#000100]">AI Agent</h2>
-        <div className="flex items-center gap-2 rounded-2xl border border-[#d1d3d2] bg-[#ffffff] p-2 shadow-sm focus-within:border-[#000100] focus-within:ring-1 focus-within:ring-[#000100]">
-          <button
-            onClick={() => {
-              if (resumes.length === 0) {
-                go("resumeUpload");
-                return;
-              }
-              setIsResumeModalOpen(true);
-            }}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#eaeceb] text-[#000100] transition active:opacity-70"
-            title={resumes.length === 0 ? "Upload Resume" : "Select Resume"}
-          >
-            <Plus className="h-5 w-5" />
-          </button>
-
-          <div className="flex flex-1 items-center gap-2 overflow-hidden">
-            {selectedResume && (
-              <div
-                onClick={() => setIsResumeModalOpen(true)}
-                className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-[#d1d3d2] bg-[#fafafa] px-2.5 py-1.5 transition active:bg-[#eaeceb]"
-              >
-                <FileText className="h-3.5 w-3.5 text-[#000100]" />
-                <span className="max-w-[70px] truncate text-xs font-bold text-[#000100]">
-                  {selectedResume.name.replace(/\.pdf$/i, "")}
-                </span>
-              </div>
-            )}
-            <input
-              type="text"
-              placeholder={
-                selectedResume ? "Set your agent goals..." : "Ask Syncra anything..."
-              }
-              className="w-full min-w-0 bg-transparent text-sm text-[#000100] outline-none placeholder:text-[#999999]"
-            />
+        {/* AI Profile Summary */}
+        <Card className="mb-6 border-none shadow-sm">
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-[#000100]">
+              AI Profile Summary
+            </h2>
           </div>
 
-          <button
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#000100] text-white transition active:opacity-80"
-          >
-            <Send className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
+          <div className="mb-4">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[#999999]">
+              Target Role
+            </p>
+            <p className="text-base font-bold text-[#000100]">
+              Senior Product Designer
+            </p>
+          </div>
 
-      {/* Recent Updates Line Connected List */}
-      <div className="mb-2">
-        <h2 className="mb-5 text-lg font-bold text-[#000100]">
-          Recent Updates
-        </h2>
-        <div className="relative">
-          {/* Continuous vertical line connecting the dots */}
-          <div className="absolute bottom-8 left-[65px] top-3 w-[2px] bg-[#d1d3d2]" />
+          <div className="mb-4">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[#999999]">
+              Work Preference
+            </p>
+            <p className="text-base font-bold text-[#000100]">New York, NY</p>
+          </div>
 
-          <div className="space-y-4">
-            {agentUpdates.map((update) => (
-              <div key={update.id} className="relative flex gap-4">
-                {/* Left: Time */}
-                <div className="flex w-[42px] shrink-0 flex-col items-end pt-1.5 text-right">
-                  <span className="text-[13px] font-black tracking-tight text-[#000100]">
-                    {update.time}
-                  </span>
-                  <span className="text-[10px] font-bold text-[#999999]">
-                    {update.sub}
-                  </span>
-                </div>
+          <div className="mb-5">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[#999999]">
+              Salary Floor
+            </p>
+            <p className="text-base font-bold text-[#000100]">$150,000</p>
+          </div>
 
-                {/* Middle: Dot */}
-                <div className="relative z-10 flex w-4 shrink-0 justify-center pt-2.5">
-                  <div
-                    className={`h-2.5 w-2.5 rounded-full ${
-                      update.active
-                        ? "bg-[#a0fe08] ring-4 ring-[#a0fe08]/30 shadow-[0_0_8px_rgba(160,254,8,0.6)]"
-                        : "bg-[#d1d3d2]"
-                    }`}
-                  />
-                </div>
+          <div className="mb-5 h-px w-full bg-[#eaeceb]" />
 
-                {/* Right: Content */}
-                <div className="flex-1 px-2 pt-1.5 pb-2">
-                  <h3 className="text-sm font-bold text-[#000100]">
-                    {update.title}
-                  </h3>
-                  <p className="mt-1 text-xs leading-5 text-[#666666]">
-                    {update.desc}
-                  </p>
-                </div>
-              </div>
+          <div className="flex flex-wrap gap-2">
+            {["UX Research", "Visual Design", "System Thinking"].map((pill) => (
+              <span
+                key={pill}
+                className="rounded-full bg-[#f4f5f4] px-3 py-1.5 text-[10px] font-bold tracking-wide text-[#666666]"
+              >
+                {pill.toUpperCase()}
+              </span>
             ))}
           </div>
+        </Card>
+
+        {/* Recent Updates Line Connected List */}
+        <div className="mb-4">
+          <h2 className="mb-5 text-lg font-bold text-[#000100]">
+            Recent Updates
+          </h2>
+          <div className="relative">
+            {/* Continuous vertical line connecting the dots */}
+            <div className="absolute bottom-8 left-[65px] top-3 w-[2px] bg-[#d1d3d2]" />
+
+            <div className="space-y-4">
+              {agentUpdates.map((update) => (
+                <div key={update.id} className="relative flex gap-4">
+                  {/* Left: Time */}
+                  <div className="flex w-[42px] shrink-0 flex-col items-end pt-1.5 text-right">
+                    <span className="text-[13px] font-black tracking-tight text-[#000100]">
+                      {update.time}
+                    </span>
+                    <span className="text-[10px] font-bold text-[#999999]">
+                      {update.sub}
+                    </span>
+                  </div>
+
+                  {/* Middle: Dot */}
+                  <div className="relative z-10 flex w-4 shrink-0 justify-center pt-2.5">
+                    <div
+                      className={`h-2.5 w-2.5 rounded-full ${
+                        update.active
+                          ? "bg-[#a0fe08] ring-4 ring-[#a0fe08]/30 shadow-[0_0_8px_rgba(160,254,8,0.6)]"
+                          : "bg-[#d1d3d2]"
+                      }`}
+                    />
+                  </div>
+
+                  {/* Right: Content */}
+                  <div className="flex-1 px-2 pt-1.5 pb-2">
+                    <h3 className="text-sm font-bold text-[#000100]">
+                      {update.title}
+                    </h3>
+                    <p className="mt-1 text-xs leading-5 text-[#666666]">
+                      {update.desc}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Resume Selection Bottom Sheet Modal */}
       <AnimatePresence>
-        {isResumeModalOpen && resumes.length > 0 && (
+        {isResumeModalOpen && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
@@ -2348,6 +2500,26 @@ function Dashboard({
 
               <div className="flex-1 overflow-y-auto px-6 py-6 no-scrollbar">
                 <div className="space-y-3 pb-8">
+                  <button
+                    onClick={() => {
+                      setIsResumeModalOpen(false);
+                      fileInputRef.current?.click();
+                    }}
+                    className="flex w-full items-center gap-4 rounded-2xl border border-dashed border-[#000100]/30 bg-[#ffffff] p-4 text-left transition-all hover:bg-[#fafafa]"
+                  >
+                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#eaeceb] text-[#000100]">
+                      <Upload className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="truncate text-sm font-bold text-[#000100]">
+                        Upload New Resume
+                      </h3>
+                      <p className="mt-0.5 text-xs text-[#666666]">
+                        PDF, DOC up to 5MB
+                      </p>
+                    </div>
+                  </button>
+
                   {resumes.map((resume) => {
                     const isSelected = activeSelectedResumeId === resume.id;
                     return (
@@ -2591,8 +2763,8 @@ function JobsScreen({
   return (
     <Screen nav activeTab="jobs" go={go} className="relative">
       {/* Header */}
-      <div className="sticky top-0 z-40 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-[#eaeceb] px-6 pb-4 pt-14">
-        <h1 className="text-xl font-bold tracking-tight text-[#000100]">
+      <div className="sticky top-0 z-40 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
+        <h1 className="text-2xl font-bold tracking-tight text-[#000100]">
           Job Results
         </h1>
         <button
@@ -3061,6 +3233,9 @@ function JobSetup({ go }) {
   return (
     <PhoneShell>
       <Screen>
+        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
+          <BackButton onClick={() => go("dashboard")} />
+        </div>
         <Header
           title="AI Job Search Setup"
           subtitle="Choose resume and search sources"
@@ -3111,7 +3286,7 @@ function JobSetup({ go }) {
             Start AI Job Search
           </PrimaryButton>
           <SecondaryButton>Edit Preferences</SecondaryButton>
-          <SecondaryButton onClick={() => go("builder")}>
+          <SecondaryButton onClick={() => go("dashboard")}>
             Edit Resume First
           </SecondaryButton>
         </div>
@@ -3131,6 +3306,9 @@ function Running({ go }) {
   return (
     <PhoneShell>
       <Screen>
+        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
+          <BackButton onClick={() => go("jobSetup")} />
+        </div>
         <Header
           title="AI Agent Running"
           subtitle="Background job search"
@@ -3266,6 +3444,9 @@ function Results({ go }) {
   return (
     <PhoneShell>
       <Screen nav go={go} activeTab="jobs">
+        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
+          <BackButton onClick={() => go("dashboard")} />
+        </div>
         <Header
           title="Job Results"
           subtitle="32 jobs found"
@@ -3317,16 +3498,13 @@ function Detail({ go, selectedJob }) {
   return (
     <PhoneShell>
       <Screen>
-        <div className="mb-6 flex items-center gap-4">
-          <button
-            onClick={() => go("jobs")}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#000100] text-white transition active:opacity-80"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <div>
-            <p className="text-xs font-medium text-[#666666]">{job.company}</p>
-            <h2 className="text-xl font-bold tracking-tight text-[#000100]">
+        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-5 flex items-center gap-2 bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
+          <BackButton onClick={() => go("jobs")} />
+          <div className="flex flex-col justify-center">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[#666666] leading-none mb-1">
+              {job.company}
+            </p>
+            <h2 className="text-lg font-bold tracking-tight text-[#000100] leading-none">
               {job.title}
             </h2>
           </div>
@@ -3391,6 +3569,9 @@ function Tailor({ go, selectedJob }) {
   return (
     <PhoneShell>
       <Screen>
+        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
+          <BackButton onClick={() => go("detail", job)} />
+        </div>
         <Header
           title="Tailor Resume"
           subtitle={`${job.company} · ${job.title}`}
@@ -3443,6 +3624,9 @@ function Review({ go, selectedJob }) {
   return (
     <PhoneShell>
       <Screen>
+        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
+          <BackButton onClick={() => go("tailor", job)} />
+        </div>
         <Header
           title="Review Application"
           subtitle="You are always in control"
@@ -3548,6 +3732,9 @@ function Tracker({ go }) {
   return (
     <PhoneShell>
       <Screen nav go={go} activeTab="jobs">
+        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
+          <BackButton onClick={() => go("dashboard")} />
+        </div>
         <Header
           title="Application Tracker"
           subtitle="Track every opportunity"
@@ -3626,17 +3813,15 @@ function ResumesScreen({
   return (
     <PhoneShell>
       <Screen>
-        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-6 flex items-center justify-between bg-transparent px-6 pb-4 pt-14 ">
-          <button
-            onClick={() => go("profile")}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#000100] text-[#a0fe08] transition active:opacity-80"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-lg font-bold text-[#000100]">Resumes</h1>
+        {/* Standardized Header */}
+        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
+          <div className="flex items-center gap-2">
+            <BackButton onClick={() => go("profile")} />
+            <h1 className="text-xl font-bold text-[#000100]">Resumes</h1>
+          </div>
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="grid h-10 w-10 place-items-center rounded-full bg-[#000100] text-white  transition hover:bg-[#333]"
+            className="grid h-9 w-9 place-items-center rounded-full bg-[#000100] text-white transition hover:bg-[#333]"
           >
             <Plus className="h-5 w-5" />
           </button>
@@ -3711,14 +3896,12 @@ function ResumePreviewScreen({
   return (
     <PhoneShell>
       <div className="relative flex h-full w-full flex-col bg-[#eaeceb]">
-        {/* Floating Action Buttons */}
-        <div className="pointer-events-none absolute left-0 right-0 top-0 z-50 flex items-center justify-between px-6 pt-14">
-          <button
+        {/* Floating Standardized Header over PDF */}
+        <div className="pointer-events-none absolute left-0 right-0 top-0 z-50 flex items-center justify-between bg-gradient-to-b from-[#eaeceb]/90 to-transparent px-6 pt-[52px] pb-3 min-h-[88px]">
+          <BackButton
             onClick={() => go(backTarget)}
-            className="pointer-events-auto grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#000100] text-white shadow-lg transition active:scale-95"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
+            className="pointer-events-auto drop-shadow-md"
+          />
 
           {resume?.id && (
             <button
@@ -3727,10 +3910,10 @@ function ResumePreviewScreen({
                 onDeleteResume(resume.id);
                 go(backTarget);
               }}
-              className="grid h-10 w-10 place-items-center rounded-full bg-[#ffffff] text-[#666666]  transition hover:bg-red-50 hover:text-red-500"
+              className="pointer-events-auto grid h-10 w-10 place-items-center rounded-full bg-[#ffffff] text-[#666666] shadow-sm transition hover:bg-red-50 hover:text-red-500"
               aria-label="Delete resume"
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-5 w-5" />
             </button>
           )}
         </div>
@@ -3755,7 +3938,7 @@ function ResumePreviewScreen({
             <iframe
               title={resume.name}
               src={`${resume.url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-              className="h-full w-full border-0 bg-white"
+              className="h-full w-full border-0 bg-white pt-14"
             />
           </div>
         ) : (
@@ -3815,8 +3998,10 @@ function Profile({
   return (
     <PhoneShell>
       <Screen nav={!noNav} floatingNav={noNav} go={go} activeTab="profile">
-        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-6 flex items-center bg-[#eaeceb] px-6 pb-4 pt-14">
-          <h1 className="text-xl font-bold tracking-tight text-[#000100]">
+        {/* Standardized Header */}
+        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-6 flex items-center gap-2 bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
+          <BackButton onClick={() => go("dashboard")} />
+          <h1 className="text-2xl font-bold tracking-tight text-[#000100]">
             Settings
           </h1>
         </div>
@@ -4108,34 +4293,27 @@ export default function App() {
   const [viewMode, setViewMode] = useState("mobile");
   const [chatMode, setChatMode] = useState("setPreferences");
   const [chatBackTarget, setChatBackTarget] = useState("dashboard");
-  const [resumeUploadBackTarget, setResumeUploadBackTarget] = useState("login");
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [savedJobs, setSavedJobs] = useState([]);
   const [hasReachedDashboard, setHasReachedDashboard] = useState(false);
   const [dashboardFilter, setDashboardFilter] = useState("all");
   const [resumes, setResumes] = useState([]);
   const [uploadQueue, setUploadQueue] = useState([]);
-  const [uploadScreenResumes, setUploadScreenResumes] = useState([]);
-  const [uploadScreenQueue, setUploadScreenQueue] = useState([]);
   const [agentResumeJob, setAgentResumeJob] = useState({
     status: "idle",
     notification: false,
     resumeName: "",
   });
   const [agentResumeNotice, setAgentResumeNotice] = useState(null);
+  const [isChatTransition, setIsChatTransition] = useState(false);
+
   const uploadTimers = useRef([]);
-  const uploadScreenTimers = useRef([]);
   const agentResumeTimer = useRef(null);
   const resumesRef = useRef([]);
-  const uploadScreenResumesRef = useRef([]);
 
   useEffect(() => {
     resumesRef.current = resumes;
   }, [resumes]);
-
-  useEffect(() => {
-    uploadScreenResumesRef.current = uploadScreenResumes;
-  }, [uploadScreenResumes]);
 
   useEffect(() => {
     const splashTimer = setTimeout(() => setShowSplash(false), 2300);
@@ -4145,12 +4323,8 @@ export default function App() {
   useEffect(() => {
     return () => {
       uploadTimers.current.forEach((timer) => clearInterval(timer));
-      uploadScreenTimers.current.forEach((timer) => clearInterval(timer));
       if (agentResumeTimer.current) clearTimeout(agentResumeTimer.current);
       resumesRef.current.forEach(
-        (resume) => resume.url && URL.revokeObjectURL(resume.url)
-      );
-      uploadScreenResumesRef.current.forEach(
         (resume) => resume.url && URL.revokeObjectURL(resume.url)
       );
     };
@@ -4228,123 +4402,14 @@ export default function App() {
     });
   };
 
-  const handleUploadScreenResume = (files) => {
-    Array.from(files || []).forEach((file) => {
-      const id = `${file.name}-${
-        file.lastModified
-      }-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-      const baseItem = {
-        id,
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        progress: 0,
-        status: "uploading",
-        uploadedAt: new Date().toISOString(),
-      };
-
-      if (!isResumeFile(file) || file.size > 5 * 1024 * 1024) {
-        setUploadScreenQueue((prev) => [
-          {
-            ...baseItem,
-            status: "error",
-            progress: 0,
-            error: "Please upload a PDF, DOC, or DOCX file under 5MB.",
-          },
-          ...prev,
-        ]);
-        setTimeout(
-          () =>
-            setUploadScreenQueue((prev) =>
-              prev.filter((item) => item.id !== id)
-            ),
-          3500
-        );
-        return;
-      }
-
-      setUploadScreenQueue((prev) => [{ ...baseItem, progress: 8 }, ...prev]);
-
-      let progress = 8;
-      const timer = setInterval(() => {
-        progress = Math.min(100, progress + Math.floor(Math.random() * 16) + 8);
-        setUploadScreenQueue((prev) =>
-          prev.map((item) =>
-            item.id === id
-              ? {
-                  ...item,
-                  progress,
-                  status: progress >= 100 ? "done" : "uploading",
-                }
-              : item
-          )
-        );
-
-        if (progress >= 100) {
-          clearInterval(timer);
-          const resume = {
-            id,
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            uploadedAt: new Date().toISOString(),
-            url: URL.createObjectURL(file),
-          };
-          setUploadScreenResumes((prev) => [resume, ...prev]);
-          setTimeout(
-            () =>
-              setUploadScreenQueue((prev) =>
-                prev.filter((item) => item.id !== id)
-              ),
-            800
-          );
-        }
-      }, 260);
-
-      uploadScreenTimers.current.push(timer);
-    });
-  };
-
-  const clearUploadScreenDrafts = () => {
-    uploadScreenTimers.current.forEach((timer) => clearInterval(timer));
-    uploadScreenTimers.current = [];
-    setUploadScreenQueue([]);
-    setUploadScreenResumes((prev) => {
-      prev.forEach((resume) => resume.url && URL.revokeObjectURL(resume.url));
-      return [];
-    });
-  };
-
-  const handleContinueWithUploadScreenResume = () => {
-    if (uploadScreenResumes.length === 0) return;
-    uploadScreenTimers.current.forEach((timer) => clearInterval(timer));
-    uploadScreenTimers.current = [];
-    setUploadScreenQueue([]);
-    setResumes((prev) => [...uploadScreenResumes, ...prev]);
-    setUploadScreenResumes([]);
-    go("aiChatbot", null, "setPreferences");
-  };
-
-  const handleSkipResumeUpload = () => {
-    clearUploadScreenDrafts();
-    go("dashboard");
-  };
-
   const handleDeleteResume = (resumeId) => {
     setResumes((prev) => {
       const target = prev.find((resume) => resume.id === resumeId);
       if (target?.url) URL.revokeObjectURL(target.url);
       return prev.filter((resume) => resume.id !== resumeId);
     });
-    setUploadScreenResumes((prev) => {
-      const target = prev.find((resume) => resume.id === resumeId);
-      if (target?.url) URL.revokeObjectURL(target.url);
-      return prev.filter((resume) => resume.id !== resumeId);
-    });
     setSelectedResume((prev) => (prev?.id === resumeId ? null : prev));
-    setDashboardSelectedResumeId((prev) =>
-      prev === resumeId ? null : prev
-    );
+    setDashboardSelectedResumeId((prev) => (prev === resumeId ? null : prev));
   };
 
   const handleOpenResume = (resume, backTarget = "resumes") => {
@@ -4400,13 +4465,6 @@ export default function App() {
         : 0;
 
     if (job) setSelectedJob(job);
-    if (
-      next === "resumeUpload" &&
-      screen !== "resumeUpload" &&
-      (screen === "dashboard" || screen === "login")
-    ) {
-      setResumeUploadBackTarget(screen);
-    }
     if (next === "aiChatbot" && screen !== "aiChatbot") {
       setChatBackTarget(screen === "landing" ? "dashboard" : screen);
     }
@@ -4436,21 +4494,6 @@ export default function App() {
         return <Login go={go} resumesCount={resumes.length} />;
       case "signup":
         return <SignUp go={go} />;
-      case "resumeUpload":
-        return (
-          <ResumeUpload
-            go={go}
-            fromDashboard={hasReachedDashboard}
-            backTarget={resumeUploadBackTarget}
-            resumes={uploadScreenResumes}
-            uploadQueue={uploadScreenQueue}
-            onUploadResume={handleUploadScreenResume}
-            onOpenResume={handleOpenResume}
-            onDeleteResume={handleDeleteResume}
-            onContinueWithResume={handleContinueWithUploadScreenResume}
-            onSkipForNow={handleSkipResumeUpload}
-          />
-        );
       case "aiChatbot":
         return (
           <AIChatbot
@@ -4460,18 +4503,17 @@ export default function App() {
             fromDashboard={hasReachedDashboard}
             backTarget={chatBackTarget}
             hideBottomNav={
-              chatMode === "createResume" &&
-              chatBackTarget === "resumeUpload" &&
-              resumeUploadBackTarget === "login"
+              chatMode === "createResume" && chatBackTarget === "login"
             }
             onStartBackgroundResume={handleStartBackgroundResume}
             agentResumeNotice={agentResumeNotice}
+            resumes={resumes}
+            onUploadResume={handleUploadResume}
+            uploadQueue={uploadQueue}
           />
         );
       case "setup":
         return <Setup go={go} />;
-      case "resumeInput":
-        return <ResumeInput go={go} />;
       case "story":
         return <Story go={go} />;
       case "builder":
@@ -4488,6 +4530,16 @@ export default function App() {
             resumes={resumes}
             selectedResumeId={dashboardSelectedResumeId}
             onSelectResume={setDashboardSelectedResumeId}
+            isChatTransition={isChatTransition}
+            onStartChatTransition={() => {
+              setIsChatTransition(true);
+              setTimeout(() => {
+                go("aiChatbot", null, "chatOpen");
+                setIsChatTransition(false); // Reset immediately after navigation finishes
+              }, 350);
+            }}
+            onUploadResume={handleUploadResume}
+            uploadQueue={uploadQueue}
           />
         );
       case "jobs":
@@ -4569,7 +4621,6 @@ export default function App() {
     resumePreviewBackTarget,
     chatMode,
     chatBackTarget,
-    resumeUploadBackTarget,
     agentResumeNotice,
     appliedJobs,
     savedJobs,
@@ -4577,23 +4628,15 @@ export default function App() {
     dashboardFilter,
     resumes,
     uploadQueue,
-    uploadScreenResumes,
-    uploadScreenQueue,
+    isChatTransition,
   ]);
 
   const insideAppTransition = screen !== "landing";
   const hideFirstTimeCreateResumeNav =
     screen === "aiChatbot" &&
     chatMode === "createResume" &&
-    chatBackTarget === "resumeUpload" &&
-    resumeUploadBackTarget === "login";
-  const tabbedScreens = [
-    "dashboard",
-    "jobs",
-    "profile",
-    "tracker",
-    "aiChatbot",
-  ];
+    chatBackTarget === "login";
+  const tabbedScreens = ["dashboard", "jobs", "profile", "tracker"];
   const isTabbed =
     tabbedScreens.includes(screen) && !hideFirstTimeCreateResumeNav;
   const activeTab =
@@ -4654,11 +4697,22 @@ export default function App() {
                       onClick={handleAgentNotificationClick}
                     />
                     {/* Persistent floating nav bar for tabbed screens */}
-                    {isTabbed && (
-                      <div className="absolute bottom-6 left-6 right-6 z-40">
-                        <BottomNav go={go} activeTab={activeTab} />
-                      </div>
-                    )}
+                    <AnimatePresence>
+                      {isTabbed && !isChatTransition && (
+                        <motion.div
+                          initial={{ y: 50, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          exit={{ y: 80, opacity: 0 }}
+                          transition={{
+                            duration: 0.35,
+                            ease: [0.22, 1, 0.36, 1],
+                          }}
+                          className="absolute bottom-6 left-6 right-6 z-40"
+                        >
+                          <BottomNav go={go} activeTab={activeTab} />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </ShellStripContext.Provider>
               </PhoneShell>
