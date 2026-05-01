@@ -632,81 +632,113 @@ function Landing({ go }) {
 }
 
 function Login({ go, resumesCount = 0 }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const nextAfterLogin = resumesCount === 0 ? "resumeUpload" : "dashboard";
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    go(nextAfterLogin);
-  };
+
   return (
     <PhoneShell>
-      <Screen>
-        <form
-          onSubmit={handleSubmit}
-          className="mx-auto flex h-full min-h-[610px] w-full max-w-[430px] flex-col"
+      <div className="relative flex h-full min-h-[610px] w-full flex-col overflow-hidden bg-[#eaeceb] px-6 py-8">
+        {/* Floating Elements (Slush style) */}
+        <motion.div
+          initial={{ x: -40, y: -20, rotate: -20 }}
+          animate={{ x: 0, y: 0, rotate: -12 }}
+          transition={{ duration: 0.8, type: "spring" }}
+          className="absolute -left-8 top-12 flex h-32 w-24 items-center justify-center rounded-3xl border-[3px] border-[#000100] bg-[#a0fe08] shadow-[4px_4px_0px_#000100]"
         >
-          <div className="flex flex-1 flex-col justify-center">
-            <div className="mx-auto mb-8">
-              <GlassIcon>
-                <span className="text-4xl">👋</span>
-              </GlassIcon>
-            </div>
-            <h1 className="text-lg font-bold text-[#000100]">Welcome back</h1>
-            <p className="mb-8 mt-2 text-sm text-[#666666]">
-              Sign in to continue your journey
-            </p>
-            <div className="space-y-3">
-              <SoftInput
-                icon={Mail}
-                placeholder="Email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <SoftInput
-                icon={Lock}
-                placeholder="Password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+          <FileText className="h-12 w-12 text-[#000100]" strokeWidth={2.5} />
+        </motion.div>
+
+        <motion.div
+          initial={{ x: 40, y: -40, rotate: 20 }}
+          animate={{ x: 0, y: 0, rotate: 15 }}
+          transition={{ duration: 0.8, type: "spring", delay: 0.1 }}
+          className="absolute -right-8 -top-4 flex h-32 w-32 items-center justify-center rounded-full border-[3px] border-[#000100] bg-[#ffdd00] shadow-[4px_4px_0px_#000100]"
+        >
+          <span className="text-6xl">🙂</span>
+        </motion.div>
+
+        <motion.div
+          initial={{ x: -40, y: 40, rotate: -30 }}
+          animate={{ x: 0, y: 0, rotate: 20 }}
+          transition={{ duration: 0.8, type: "spring", delay: 0.2 }}
+          className="absolute -left-8 bottom-56 flex h-24 w-24 items-center justify-center rounded-full border-[3px] border-[#000100] bg-[#ffffff] shadow-[4px_4px_0px_#000100]"
+        >
+          <span className="text-5xl">🚀</span>
+        </motion.div>
+
+        <motion.div
+          initial={{ x: 40, y: 40, rotate: 20 }}
+          animate={{ x: 0, y: 0, rotate: -10 }}
+          transition={{ duration: 0.8, type: "spring", delay: 0.3 }}
+          className="absolute -right-6 bottom-48 flex h-20 w-28 items-center justify-center rounded-2xl border-[3px] border-[#000100] bg-[#000100] shadow-[4px_4px_0px_#a0fe08]"
+        >
+          <Briefcase className="h-10 w-10 text-[#a0fe08]" />
+        </motion.div>
+
+        {/* Header Logo */}
+        <div className="relative z-10 mx-auto mt-2 text-center">
+          <h2 className="text-xl font-black tracking-tighter text-[#000100] uppercase">
+            RESUME AI AGENT
+          </h2>
+        </div>
+
+        {/* Main Center Text */}
+        <div className="relative z-10 flex flex-1 flex-col items-center justify-center">
+          <h1 className="text-center text-[2.25rem] leading-[0.95] tracking-tighter font-black text-[#000100]">
+            LET AI AGENT
+            <br />
+            DO
+            <br />
+            THE WORK.
+          </h1>
+        </div>
+
+        {/* Bottom Controls */}
+        <div className="relative z-10 mt-auto flex flex-col gap-4 pb-2">
+          <div className="flex gap-4">
             <button
-              type="button"
-              onClick={() => {}}
-              className="mt-2 self-end text-sm font-bold text-[#000100] transition hover:opacity-70"
+              onClick={() => go(nextAfterLogin)}
+              className="flex flex-1 items-center justify-center rounded-full bg-[#ffffff] border-[3px] border-[#000100] py-3 shadow-[4px_4px_0px_#000100] transition active:translate-y-[2px] active:translate-x-[2px] active:shadow-[0px_0px_0px_#000100]"
             >
-              Forgot password?
+              <svg
+                viewBox="0 0 24 24"
+                className="h-5 w-5 text-[#000100]"
+                fill="currentColor"
+              >
+                <path d="M12.545 10.239v3.821h5.445c-.712 2.315-2.647 3.972-5.445 3.972-3.332 0-6.033-2.701-6.033-6.032s2.701-6.032 6.033-6.032c1.498 0 2.866.549 3.921 1.453l2.814-2.814C17.503 2.988 15.139 2 12.545 2 7.021 2 2.545 6.477 2.545 12s4.476 10 10.001 10c8.396 0 10.249-7.85 9.426-11.761h-9.427z" />
+              </svg>
             </button>
-            <PrimaryButton className="mt-5" onClick={handleSubmit}>
-              Sign in <ArrowRight className="h-4 w-4" />
-            </PrimaryButton>
-            <div className="my-6 flex items-center gap-3 text-xs text-[#666666]">
-              <span className="h-px flex-1 bg-[#d1d3d2]" /> or continue with{" "}
-              <span className="h-px flex-1 bg-[#d1d3d2]" />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <SecondaryButton onClick={() => go(nextAfterLogin)}>
-                Google
-              </SecondaryButton>
-              <SecondaryButton onClick={() => go(nextAfterLogin)}>
-                Demo Mode
-              </SecondaryButton>
-            </div>
+            <button
+              onClick={() => go(nextAfterLogin)}
+              className="flex flex-1 items-center justify-center rounded-full bg-[#000100] py-3 border-[3px] border-[#000100] shadow-[4px_4px_0px_#a0fe08] transition active:translate-y-[2px] active:translate-x-[2px] active:shadow-[0px_0px_0px_#a0fe08]"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="h-6 w-6 text-white"
+                fill="currentColor"
+              >
+                <path d="M15.42 12.012c-.023-1.895 1.545-2.82 1.616-2.864-1.22-1.776-3.13-2.016-3.805-2.04-1.619-.163-3.16.953-3.987.953-.827 0-2.091-.933-3.415-.907-1.722.025-3.313.998-4.195 2.535-1.785 3.09-.462 7.665 1.282 10.187.851 1.229 1.865 2.615 3.176 2.565 1.264-.05 1.745-.815 3.277-.815 1.53 0 1.986.815 3.3.79 1.336-.025 2.22-1.258 3.064-2.48.983-1.433 1.388-2.822 1.408-2.894-.031-.013-2.704-1.037-2.721-4.03M12.872 7.39c.691-.837 1.157-2.001 1.03-3.161-1.002.04-2.203.666-2.915 1.503-.637.747-1.196 1.93-.105 3.064 1.12.087 2.28-.567 2.99-1.406" />
+              </svg>
+            </button>
           </div>
-          <p className="pb-2 text-center text-sm text-[#666666]">
-            Don&apos;t have an account?{" "}
-            <button
-              type="button"
-              onClick={() => go("signup")}
-              className="font-bold text-[#000100]"
-            >
-              Sign up
-            </button>
+          <button
+            onClick={() => go(nextAfterLogin)}
+            className="w-full rounded-full bg-[#a0fe08] py-3 text-[15px] font-bold text-[#000100] border-[3px] border-[#000100] shadow-[4px_4px_0px_#000100] transition active:translate-y-[2px] active:translate-x-[2px] active:shadow-[0px_0px_0px_#000100]"
+          >
+            Guest
+          </button>
+          <p className="mt-2 px-2 text-center text-[11px] leading-5 text-[#666666]">
+            By continuing, you agree to our{" "}
+            <span className="underline font-bold text-[#000100]">
+              Terms of Service
+            </span>{" "}
+            and{" "}
+            <span className="underline font-bold text-[#000100]">
+              Privacy Policy
+            </span>
+            .
           </p>
-        </form>
-      </Screen>
+        </div>
+      </div>
     </PhoneShell>
   );
 }
@@ -807,15 +839,11 @@ function ResumeUpload({
   onContinueWithResume = () => {},
   onSkipForNow = () => {},
 }) {
-  const [uploaded, setUploaded] = useState(
-    resumes.length > 0 || uploadQueue.length > 0
-  );
   const fileInputRef = useRef(null);
 
   const handleFiles = (fileList) => {
     const files = Array.from(fileList || []);
     if (!files.length) return;
-    setUploaded(true);
     onUploadResume(files);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -825,20 +853,11 @@ function ResumeUpload({
     handleFiles(event.dataTransfer.files);
   };
 
-  const latestResume = resumes[0];
-  const resumeCount = resumes.length;
-  const uploadResumeDescription =
-    resumeCount === 0
-      ? "No resume yet"
-      : resumeCount === 1
-      ? "I already have a resume"
-      : `I already have ${resumeCount} resumes`;
-
   return (
     <PhoneShell>
-      <Screen>
-        {/* Back / Skip header */}
-        <div className="mb-6 flex items-center justify-between">
+      <Screen className="flex flex-col">
+        {/* Header - Standardized Black Circle Back Button */}
+        <div className="mb-6 flex shrink-0 items-center justify-between">
           <button
             onClick={() =>
               go(backTarget || (fromDashboard ? "dashboard" : "login"))
@@ -849,141 +868,87 @@ function ResumeUpload({
           </button>
         </div>
 
-        <div className="mx-auto mb-6 w-fit">
-          <GlassIcon>
-            <FileText className="h-8 w-8 text-white" />
-          </GlassIcon>
-        </div>
-        <h1 className="text-xl font-bold tracking-tight text-[#000100]">
-          Your Resume
-        </h1>
-        <p className="mt-2 text-sm text-[#666666]">
-          Upload your existing resume or create a brand new one with AI
-          assistance.
-        </p>
-
-        {/* Upload Resume Option */}
-        <button
-          type="button"
-          onClick={() => setUploaded((prev) => !prev)}
-          className={`mt-6 flex w-full items-center gap-4 rounded-3xl border p-5 text-left transition ${
-            uploaded
-              ? "border-[#000100] bg-[#ffffff]"
-              : "border-[#d1d3d2] bg-[#ffffff]"
-          }`}
+        <div
+          className="flex-1 overflow-y-auto no-scrollbar pb-4"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
         >
-          <div
-            className={`grid h-14 w-14 shrink-0 place-items-center rounded-full ${
-              uploaded
-                ? "bg-[#000100] text-white"
-                : "bg-[#eaeceb] text-[#000100]"
-            }`}
-          >
-            <Upload className="h-6 w-6" />
+          <div className="mx-auto mb-4 w-fit">
+            <GlassIcon>
+              <FileText className="h-8 w-8 text-white" />
+            </GlassIcon>
           </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="font-bold text-[#000100]">Upload Resume</h3>
-            <p className="mt-1 text-xs text-[#666666]">
-              {uploadResumeDescription}
-            </p>
-            {latestResume && (
-              <p className="mt-2 truncate text-xs font-bold text-[#000100]">
-                Selected: {latestResume.name}
-              </p>
-            )}
-          </div>
-          {uploaded && (
-            <CheckCircle2 className="ml-auto h-5 w-5 shrink-0 text-[#a0fe08]" />
-          )}
-        </button>
+          <h1 className="mb-8 text-center text-xl font-bold tracking-tight text-[#000100]">
+            Your Resume
+          </h1>
 
-        {/* Upload drop zone */}
-        <AnimatePresence>
-          {uploaded && (
-            <motion.div
-              key="upload-drop-zone"
-              initial={{ opacity: 0, height: 0, marginTop: 0 }}
-              animate={{ opacity: 1, height: "auto", marginTop: 12 }}
-              exit={{ opacity: 0, height: 0, marginTop: 0 }}
-              transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-              className="overflow-hidden"
+          {/* Clean Dashboard Theme Action Squares */}
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="group flex aspect-square flex-col items-center justify-center rounded-3xl border border-[#d1d3d2] bg-[#ffffff] p-4 shadow-sm transition active:scale-95 hover:bg-[#fafafa]"
             >
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() => fileInputRef.current?.click()}
-                onKeyDown={(e) =>
-                  (e.key === "Enter" || e.key === " ") &&
-                  fileInputRef.current?.click()
-                }
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={handleDrop}
-                className="flex h-36 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#000100]/30 bg-[#ffffff] text-[#000100] transition hover:bg-[#eaeceb]"
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                  className="hidden"
-                  onChange={(e) => handleFiles(e.target.files)}
-                />
-                <Upload className="mb-2 h-7 w-7" />
-                <span className="text-sm font-bold">
-                  Tap to upload or drag & drop
-                </span>
-                <span className="mt-1 text-xs text-[#666666]">
-                  PDF up to 5MB
-                </span>
+              <div className="mb-3 grid h-14 w-14 place-items-center rounded-full bg-[#eaeceb] text-[#000100] transition-colors group-hover:bg-[#000100] group-hover:text-white">
+                <Upload className="h-6 w-6" />
               </div>
-            </motion.div>
+              <span className="text-sm font-bold text-[#000100]">
+                Upload PDF
+              </span>
+            </button>
+
+            <button
+              onClick={() => go("aiChatbot", null, "createResume")}
+              className="group flex aspect-square flex-col items-center justify-center rounded-3xl border border-[#d1d3d2] bg-[#ffffff] p-4 shadow-sm transition active:scale-95 hover:bg-[#fafafa]"
+            >
+              <div className="mb-3 grid h-14 w-14 place-items-center rounded-full bg-[#eaeceb] text-[#000100] transition-colors group-hover:bg-[#000100] group-hover:text-white">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <span className="text-sm font-bold text-[#000100]">AI Build</span>
+            </button>
+          </div>
+
+          {/* Hidden File Input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            className="hidden"
+            onChange={(e) => handleFiles(e.target.files)}
+          />
+
+          {/* Uploaded List */}
+          {(uploadQueue.length > 0 || resumes.length > 0) && (
+            <div className="space-y-4">
+              {uploadQueue.map((item) => (
+                <ResumeUploadCard key={item.id} item={item} uploading />
+              ))}
+              {resumes.map((resume) => (
+                <ResumeUploadCard
+                  key={resume.id}
+                  item={resume}
+                  onOpen={() => onOpenResume(resume, "resumeUpload")}
+                  onDelete={() => onDeleteResume(resume.id)}
+                />
+              ))}
+            </div>
           )}
-        </AnimatePresence>
+        </div>
 
-        {(uploadQueue.length > 0 || resumes.length > 0) && (
-          <div className="mt-4 space-y-3">
-            {uploadQueue.map((item) => (
-              <ResumeUploadCard key={item.id} item={item} uploading />
-            ))}
-            {resumes.map((resume) => (
-              <ResumeUploadCard
-                key={resume.id}
-                item={resume}
-                onOpen={() => onOpenResume(resume, "resumeUpload")}
-                onDelete={() => onDeleteResume(resume.id)}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Create New Resume Option */}
-        <button
-          onMouseDown={(event) => event.preventDefault()}
-          onClick={() => go("aiChatbot", null, "createResume")}
-          className="mt-3 flex w-full items-center gap-4 rounded-3xl border border-[#d1d3d2] bg-[#ffffff] p-5 text-left transition hover:bg-[#eaeceb]"
-        >
-          <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-[#000100] text-white">
-            <PenLine className="h-6 w-6" />
-          </div>
-          <div>
-            <h3 className="font-bold text-[#000100]">Create New Resume</h3>
-            <p className="mt-1 text-xs text-[#666666]">
-              Build one from scratch with AI help
-            </p>
-          </div>
-          <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-[#666666]" />
-        </button>
-
-        {/* Continue with uploaded resume */}
-        <div className="mt-8 space-y-3">
+        {/* Footer Controls */}
+        <div className="mt-auto shrink-0 pt-4 flex flex-col gap-3">
           <PrimaryButton
             disabled={resumes.length === 0}
             onClick={onContinueWithResume}
+            className="w-full py-4 text-[15px]"
           >
-            Continue with Resume <ArrowRight className="h-4 w-4" />
+            Continue
           </PrimaryButton>
-          <TopNavButton onClick={onSkipForNow} className="w-full py-3">
-            Skip for now <ArrowRight className="h-4 w-4 text-[#a0fe08]" />
-          </TopNavButton>
+          <button
+            onClick={onSkipForNow}
+            className="w-full py-2 text-sm font-bold text-[#666666] transition active:opacity-70"
+          >
+            Skip for now
+          </button>
         </div>
       </Screen>
     </PhoneShell>
@@ -993,85 +958,65 @@ function ResumeUpload({
 function ResumeUploadCard({ item, uploading = false, onOpen, onDelete }) {
   const progress = item.progress ?? 100;
   const isError = item.status === "error";
-  const isDone = !uploading || item.status === "done" || progress >= 100;
-  const fileLabel = item.name?.split(".").pop()?.toUpperCase() || "FILE";
 
   return (
     <div
-      className={`rounded-3xl border ${
-        isError ? "border-red-400 bg-red-50" : "border-[#d1d3d2] bg-[#ffffff]"
-      } p-4`}
+      className={`relative overflow-hidden rounded-3xl border border-[#d1d3d2] p-4 shadow-sm transition-all ${
+        isError ? "bg-red-50 border-red-200" : "bg-[#ffffff]"
+      }`}
     >
-      <div className="flex items-center gap-3">
+      {/* Background fill handles progress organically */}
+      {uploading && !isError && (
+        <div
+          className="absolute bottom-0 left-0 top-0 bg-[#a0fe08]/20 transition-all duration-300"
+          style={{ width: `${progress}%` }}
+        />
+      )}
+
+      <div className="relative z-10 flex items-center gap-4">
         <div
           className={`grid h-12 w-12 shrink-0 place-items-center rounded-full ${
             isError ? "bg-red-500 text-white" : "bg-[#000100] text-white"
           }`}
         >
-          <FileText className="h-6 w-6" />
+          <FileText className="h-5 w-5" />
         </div>
+
         <div className="min-w-0 flex-1">
           <h4 className="truncate text-sm font-bold text-[#000100]">
             {item.name}
           </h4>
           <p className="mt-0.5 text-xs text-[#666666]">
             {formatFileSize(item.size)}{" "}
-            {uploading && !isDone && <> · uploading {progress}%</>}
-            {!uploading && <> · uploaded {formatUploadDate(item.uploadedAt)}</>}
+            {isError
+              ? "• Error"
+              : uploading && progress < 100
+              ? `• ${progress}%`
+              : ""}
           </p>
         </div>
-        <span className="rounded-full bg-[#eaeceb] px-2 py-1 text-[10px] font-bold text-[#000100]">
-          {fileLabel}
-        </span>
-        {!uploading && item.url && (
+
+        {!uploading && !isError && item.url && (
           <button
             type="button"
             onClick={() => onOpen?.(item)}
-            className="rounded-xl bg-[#000100] px-3 py-2 text-xs font-bold text-white transition active:opacity-80"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#d1d3d2] bg-[#ffffff] text-[#000100] transition active:bg-[#eaeceb]"
           >
-            Preview
+            <Search className="h-4 w-4" />
           </button>
         )}
+
         {onDelete && (
           <button
             type="button"
             onClick={onDelete}
-            className="grid h-9 w-9 place-items-center rounded-full bg-[#eaeceb] text-[#666666] transition hover:bg-red-50 hover:text-red-500"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#eaeceb] text-[#666666] transition hover:bg-red-50 hover:text-red-500"
             aria-label={`Delete ${item.name}`}
           >
             <Trash2 className="h-4 w-4" />
           </button>
         )}
       </div>
-
-      {uploading && (
-        <div className="mt-3">
-          {isError ? (
-            <div className="text-xs font-bold text-red-500">
-              Upload failed. Please try again.
-            </div>
-          ) : (
-            <>
-              <div className="h-2 overflow-hidden rounded-full bg-[#eaeceb]">
-                <motion.div
-                  className="h-full rounded-full bg-[#000100]"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progress}%` }}
-                  transition={{ duration: 0.25, ease: "easeOut" }}
-                />
-              </div>
-              <div className="mt-2 flex items-center justify-between text-[11px] text-[#666666]">
-                <span>
-                  {isDone ? "Upload complete" : "Uploading resume..."}
-                </span>
-                <span className={isDone ? "font-bold text-[#a0fe08]" : ""}>
-                  {isDone ? "100%" : `${progress}%`}
-                </span>
-              </div>
-            </>
-          )}
-        </div>
-      )}
     </div>
   );
 }
@@ -1274,7 +1219,9 @@ function AIChatbot({
       return careerPromptFlows["find me jobs"];
     }
     if (
-      (key.includes("improve") || key.includes("review") || key.includes("fix")) &&
+      (key.includes("improve") ||
+        key.includes("review") ||
+        key.includes("fix")) &&
       key.includes("resume")
     ) {
       return careerPromptFlows["improve my resume"];
@@ -1543,10 +1490,7 @@ function AIChatbot({
           <div className="mb-6 flex items-center justify-between">
             <button
               onClick={() =>
-                go(
-                  backTarget ||
-                    (fromDashboard ? "dashboard" : "resumeUpload")
-                )
+                go(backTarget || (fromDashboard ? "dashboard" : "resumeUpload"))
               }
               className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#000100] text-white transition active:scale-95"
             >
@@ -1572,9 +1516,7 @@ function AIChatbot({
             </div>
             <div className="ml-auto">
               <StepPill>
-                {chatMode === "createResume"
-                  ? "Resume"
-                  : "Preferences"}
+                {chatMode === "createResume" ? "Resume" : "Preferences"}
               </StepPill>
             </div>
           </div>
@@ -3753,87 +3695,86 @@ function ResumePreviewScreen({
 
   return (
     <PhoneShell>
-      <Screen>
-        <div className="sticky top-0 z-50 -mx-6 -mt-14 mb-6 flex items-center justify-between bg-[#eaeceb] px-6 pb-4 pt-14">
+      <div className="relative flex h-full w-full flex-col bg-[#eaeceb]">
+        {/* Floating Action Buttons */}
+        <div className="pointer-events-none absolute left-0 right-0 top-0 z-50 flex items-center justify-between px-6 pt-14">
           <button
             onClick={() => go(backTarget)}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#000100] text-white transition active:scale-95"
+            className="pointer-events-auto grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#000100] text-white shadow-lg transition active:scale-95"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <div className="min-w-0 flex-1 px-3 text-center">
-            <h1 className="truncate text-xl font-bold tracking-tight text-[#000100]">
-              Resume Preview
-            </h1>
-          </div>
-          {resume?.id ? (
+
+          {resume?.id && (
             <button
               type="button"
               onClick={() => {
                 onDeleteResume(resume.id);
                 go(backTarget);
               }}
-              className="grid h-10 w-10 place-items-center rounded-full bg-[#ffffff] text-[#666666] transition hover:bg-red-50 hover:text-red-500"
+              className="pointer-events-auto grid h-10 w-10 place-items-center rounded-full bg-white text-red-500 shadow-lg transition hover:bg-red-50 active:scale-95"
               aria-label="Delete resume"
             >
               <Trash2 className="h-5 w-5" />
             </button>
-          ) : (
-            <div className="h-10 w-10" />
           )}
         </div>
 
+        {/* Full Screen Content Area */}
         {!resume ? (
-          <Card className="text-center">
-            <div
-              className={`mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-[#000100] text-white ${neoIn}`}
-            >
-              <FileText className="h-7 w-7" />
-            </div>
-            <h3 className="font-bold text-[#000100]">No resume selected</h3>
-            <p className="mt-2 text-sm leading-6 text-[#666666]">
-              Go back to your resume list and choose a file to preview.
-            </p>
-          </Card>
-        ) : canPreviewPdf ? (
-          <div
-            className={`overflow-hidden rounded-3xl border border-[#d1d3d2] bg-[#ffffff] ${neoOut} `}
-          >
-            <div className="flex items-center justify-between border-b border-[#d1d3d2] px-4 py-3">
-              <div className="min-w-0">
-                <h3 className="truncate text-sm font-bold text-[#000100]">
-                  {resume.name}
-                </h3>
-                <p className="text-xs text-[#666666]">
-                  {formatFileSize(resume.size)} · PDF preview
-                </p>
+          <div className="flex flex-1 items-center justify-center p-6 pt-24">
+            <Card className="w-full text-center">
+              <div
+                className={`mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-[#000100] text-white ${neoIn}`}
+              >
+                <FileText className="h-7 w-7" />
               </div>
-              <StepPill>Inside app</StepPill>
-            </div>
-            <div className="h-[500px] bg-[#eaeceb] sm:h-[560px]">
-              <iframe
-                title={resume.name}
-                src={`${resume.url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-                className="h-full w-full border-0 bg-white"
-              />
-            </div>
+              <h3 className="font-bold text-[#000100]">No resume selected</h3>
+              <p className="mt-2 text-sm leading-6 text-[#666666]">
+                Go back to your resume list and choose a file to preview.
+              </p>
+            </Card>
+          </div>
+        ) : canPreviewPdf ? (
+          <div className="flex-1 bg-white">
+            <iframe
+              title={resume.name}
+              src={`${resume.url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+              className="h-full w-full border-0 bg-white"
+            />
           </div>
         ) : (
-          <Card className="text-center">
-            <div
-              className={`mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-[#000100] text-white ${neoIn}`}
-            >
-              <FileText className="h-7 w-7" />
-            </div>
-            <h3 className="font-bold text-[#000100]">Preview not available</h3>
-            <p className="mt-2 text-sm leading-6 text-[#666666]">
-              Browser in-app preview works best for PDF files. DOC and DOCX
-              files are saved in your list, but they cannot be rendered inside
-              the phone screen without a document viewer service.
-            </p>
-          </Card>
+          <div className="flex flex-1 items-center justify-center p-6 pt-24">
+            <Card className="w-full text-center">
+              <div
+                className={`mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-[#000100] text-white ${neoIn}`}
+              >
+                <FileText className="h-7 w-7" />
+              </div>
+              <h3 className="font-bold text-[#000100]">
+                Preview not available
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-[#666666]">
+                Browser in-app preview works best for PDF files. DOC and DOCX
+                files are saved in your list, but they cannot be rendered inside
+                the phone screen without a document viewer service.
+              </p>
+            </Card>
+          </div>
         )}
-      </Screen>
+
+        {/* Floating File Name Pill at Bottom */}
+        {canPreviewPdf && (
+          <div className="pointer-events-none absolute bottom-8 left-1/2 z-50 w-full max-w-[80%] -translate-x-1/2 px-4">
+            <div className="mx-auto flex w-fit items-center gap-2 rounded-full border border-white/20 bg-[#000100]/80 px-4 py-2 backdrop-blur-md shadow-lg">
+              <FileText className="h-3.5 w-3.5 text-[#a0fe08]" />
+              <span className="truncate text-xs font-bold text-white">
+                {resume.name}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
     </PhoneShell>
   );
 }
