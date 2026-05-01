@@ -901,7 +901,7 @@ function ResumeUpload({
               className="group flex aspect-square flex-col items-center justify-center rounded-3xl border border-[#d1d3d2] bg-[#ffffff] p-4 shadow-sm transition active:scale-95 hover:bg-[#fafafa]"
             >
               <div className="mb-3 grid h-14 w-14 place-items-center rounded-full bg-[#eaeceb] text-[#000100] transition-colors group-hover:bg-[#000100] group-hover:text-white">
-                <Sparkles className="h-6 w-6" />
+                <PenLine className="h-6 w-6" />
               </div>
               <span className="text-sm font-bold text-[#000100]">AI Build</span>
             </button>
@@ -1073,7 +1073,7 @@ function AIChatbot({
     ],
   };
 
-  const openChatFlows = {
+  const careerPromptFlows = {
     "find me jobs": [
       "Starting an agentic job search now. I’ll use your resume, preferences, and skill profile to rank opportunities.",
       "Searching demo sources: LinkedIn, Indeed, company career pages, and internship platforms…",
@@ -1217,7 +1217,7 @@ function AIChatbot({
     const key = normalizePrompt(text);
     if (chatMode === "createResume" && createResumeFlows[key])
       return createResumeFlows[key];
-    if (isChatOpen && openChatFlows[key]) return openChatFlows[key];
+    if (isChatOpen && careerPromptFlows[key]) return careerPromptFlows[key];
     if (!isChatOpen && chatMode !== "createResume" && preferenceFlows[key])
       return preferenceFlows[key];
 
@@ -2370,6 +2370,7 @@ function JobsScreen({
   go,
   appliedJobs = [],
   savedJobs = [],
+  onSaveJob = () => {},
   dashboardFilter = "all",
   setDashboardFilter,
 }) {
@@ -2647,6 +2648,7 @@ function JobsScreen({
             {group.items.map((job) => {
               const isApplied = appliedJobs.includes(job.id);
               const isSelected = selectedJobIds.includes(job.id);
+              const isSaved = savedJobs.includes(job.id);
               return (
                 <Card
                   key={job.id}
@@ -2688,15 +2690,35 @@ function JobsScreen({
                           </p>
                         </div>
                       </div>
-                      {isApplied ? (
-                        <span className="shrink-0 rounded-full bg-[#000100] px-2.5 py-1 text-[10px] font-bold text-white">
-                          Applied
-                        </span>
-                      ) : (
-                        <span className="shrink-0 rounded-full bg-[#a0fe08] px-2.5 py-1 text-[10px] font-bold text-[#000100]">
-                          {job.match}%
-                        </span>
-                      )}
+                      <div className="flex shrink-0 items-center gap-2">
+                        {isApplied ? (
+                          <span className="rounded-full bg-[#000100] px-2.5 py-1 text-[10px] font-bold text-white">
+                            Applied
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-[#a0fe08] px-2.5 py-1 text-[10px] font-bold text-[#000100]">
+                            {job.match}%
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onSaveJob(job.id);
+                          }}
+                          className={`grid h-8 w-8 place-items-center rounded-full transition active:opacity-70 ${
+                            isSaved
+                              ? "bg-[#000100] text-[#a0fe08]"
+                              : "bg-[#eaeceb] text-[#666666] hover:bg-[#000100] hover:text-white"
+                          }`}
+                          aria-label={isSaved ? "Unsave job" : "Save job"}
+                        >
+                          <Bookmark
+                            className="h-4 w-4"
+                            fill={isSaved ? "currentColor" : "none"}
+                          />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </Card>
