@@ -4583,7 +4583,7 @@ export default function App() {
       : screen === "jobs"
       ? "jobs"
       : screen === "aiChatbot"
-      ? "aiChatbot"
+      ? "home"
       : "home";
 
   return (
