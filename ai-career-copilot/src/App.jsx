@@ -2,7 +2,6 @@ import React, { useContext, useMemo, useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
-  ArrowLeft,
   Upload,
   Mail,
   Lock,
@@ -1551,8 +1550,8 @@ function AIChatbot({
               }
               className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#000100] text-white transition active:scale-95"
             >
-              <ArrowLeft className="h-4 w-4 text-[#a0fe08]" /> Back
-            </TopNavButton>
+              <ChevronLeft className="h-5 w-5" />
+            </button>
             <TopNavButton onClick={() => go("dashboard")}>
               Skip <ArrowRight className="h-4 w-4 text-[#a0fe08]" />
             </TopNavButton>
@@ -2114,14 +2113,9 @@ function Dashboard({
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
   const [selectedResumeId, setSelectedResumeId] = useState(null);
 
-  // Auto-select the first uploaded resume if none is selected
-  useEffect(() => {
-    if (!selectedResumeId && resumes.length > 0) {
-      setSelectedResumeId(resumes[0].id);
-    }
-  }, [resumes, selectedResumeId]);
-
-  const selectedResume = resumes.find((r) => r.id === selectedResumeId);
+  const selectedResume =
+    resumes.find((r) => r.id === selectedResumeId) || resumes[0] || null;
+  const activeSelectedResumeId = selectedResume?.id ?? null;
 
   const agentUpdates = [
     {
@@ -2374,7 +2368,7 @@ function Dashboard({
                 ) : (
                   <div className="space-y-3 pb-8">
                     {resumes.map((resume) => {
-                      const isSelected = selectedResumeId === resume.id;
+                      const isSelected = activeSelectedResumeId === resume.id;
                       return (
                         <button
                           key={resume.id}
