@@ -2413,8 +2413,8 @@ function JobsScreen({
   const [isSelectionMode, setIsSelectionMode] = useState(false);
 
   const defaultFilters = {
-    workSetting: ["All"],
-    experience: ["All"],
+    workSetting: ["Any"],
+    experience: ["Any"],
     skills: [],
     roles: [],
   };
@@ -2422,9 +2422,9 @@ function JobsScreen({
   const [activeFilters, setActiveFilters] = useState(defaultFilters);
   const [tempFilters, setTempFilters] = useState(defaultFilters);
 
-  const workSettingsOptions = ["All", "Remote", "Hybrid", "On-site"];
+  const workSettingsOptions = ["Any", "Remote", "Hybrid", "On-site"];
   const experienceOptions = [
-    "All",
+    "Any",
     "Internship",
     "Entry Level",
     "Mid Level",
@@ -2465,15 +2465,24 @@ function JobsScreen({
     setTempMatchThreshold(50);
   };
 
+  const showAllJobs = () => {
+    setDashboardFilter("all");
+    setSearchQuery("");
+    setActiveFilters(defaultFilters);
+    setTempFilters(defaultFilters);
+    setMatchThreshold(50);
+    setTempMatchThreshold(50);
+  };
+
   const toggleChip = (category, value) => {
     setTempFilters((prev) => {
       const current = prev[category];
-      if (value === "All") return { ...prev, [category]: ["All"] };
+      if (value === "Any") return { ...prev, [category]: ["Any"] };
 
-      let newArr = current.filter((v) => v !== "All");
+      let newArr = current.filter((v) => v !== "Any");
       if (newArr.includes(value)) {
         newArr = newArr.filter((v) => v !== value);
-        if (newArr.length === 0) newArr = ["All"];
+        if (newArr.length === 0) newArr = ["Any"];
       } else {
         newArr = [...newArr, value];
       }
@@ -2527,7 +2536,7 @@ function JobsScreen({
 
     // Work Setting
     if (
-      !activeFilters.workSetting.includes("All") &&
+      !activeFilters.workSetting.includes("Any") &&
       !activeFilters.workSetting.includes(job.workSetting)
     ) {
       return false;
@@ -2535,7 +2544,7 @@ function JobsScreen({
 
     // Experience Level
     if (
-      !activeFilters.experience.includes("All") &&
+      !activeFilters.experience.includes("Any") &&
       !activeFilters.experience.includes(job.type)
     ) {
       return false;
@@ -2619,14 +2628,14 @@ function JobsScreen({
           Filter
         </button>
         <button
-          onClick={() => setDashboardFilter("all")}
+          onClick={showAllJobs}
           className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition ${
             dashboardFilter === "all"
               ? "bg-[#000100] text-white"
               : "border border-[#d1d3d2] bg-[#ffffff] text-[#000100]"
           }`}
         >
-          All
+          All Jobs
         </button>
         {filters.map((f) => {
           const FIcon = f.icon;
