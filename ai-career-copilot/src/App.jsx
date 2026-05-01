@@ -1480,7 +1480,14 @@ function AIChatbot({
 
   const quickReplies =
     chatMode === "createResume"
-      ? []
+      ? [
+          "I'll type it out",
+          "Use my LinkedIn",
+          "Find me jobs",
+          "Improve my resume",
+          "Career advice",
+          "Salary insights",
+        ]
       : ["Remote only", "Full-time", "Entry level", "$50K–$80K"];
 
   const handleQuickReply = (reply) => {
