@@ -37,8 +37,13 @@ import {
   Battery,
   Signal,
   Trash2,
-  Mic,
+  AlertCircle,
 } from "lucide-react";
+
+// --- LOCAL VSCODE IMAGES ---
+// Put your actual .jpg/.png files in the `public` folder of your VSCode project.
+const PROFILE_IMG_URL = "/profile.jpg";
+const LOGO_IMG_URL = "/logo.png";
 
 const jobs = [
   {
@@ -53,6 +58,7 @@ const jobs = [
     why: "Your design systems and product thinking match this role perfectly.",
     missing: ["Prototyping tools depth"],
     skills: ["Figma", "Design Systems", "UI/UX"],
+    agentStatus: "drafted",
   },
   {
     id: 2,
@@ -66,6 +72,7 @@ const jobs = [
     why: "Your portfolio, Figma experience, and product thinking match this role strongly.",
     missing: ["Design systems", "A/B testing"],
     skills: ["Figma", "UI/UX", "Product Design"],
+    agentStatus: "drafted",
   },
   {
     id: 3,
@@ -79,6 +86,7 @@ const jobs = [
     why: "Your React projects and API integration experience fit the core requirements.",
     missing: ["Testing Library", "TypeScript depth"],
     skills: ["React", "JavaScript", "Frontend", "TypeScript"],
+    agentStatus: "matched",
   },
   {
     id: 4,
@@ -92,6 +100,7 @@ const jobs = [
     why: "Your research, wireframing, and student product experience align well.",
     missing: ["Portfolio case study polish"],
     skills: ["Figma", "Research", "Wireframing"],
+    agentStatus: "matched",
   },
 ];
 
@@ -197,7 +206,7 @@ const createSimplePdfBlob = (title, lines = []) => {
   const xrefStart = pdf.length;
   pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
   offsets.forEach((offset) => {
-    pdf += `${String(offset).padStart(10, "0")} 0000 n \n`;
+    pdf += `${String(offset).padStart(10, "0")} 00000 n \n`;
   });
   pdf += `trailer\n<< /Size ${
     objects.length + 1
@@ -356,10 +365,12 @@ const SoftInput = ({ icon, placeholder, type = "text", value, onChange }) => {
   );
 };
 
-const PhoneShell = ({ children, forceMobile = false }) => {
+const PhoneShell = ({ children, forceMobile = false, theme = "light" }) => {
   const stripShell = useContext(ShellStripContext);
   const viewMode = useContext(ViewModeContext);
   const showWebView = viewMode === "web" && !forceMobile;
+  const isDark = theme === "dark";
+  const statusColor = isDark ? "text-white" : "text-[#000100]";
 
   if (stripShell) return <>{children}</>;
 
@@ -384,7 +395,9 @@ const PhoneShell = ({ children, forceMobile = false }) => {
         <div className="pointer-events-none absolute right-[6px] top-48 h-12 w-[3px] rounded-full bg-[#333]" />
         <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[2.2rem] bg-[#eaeceb]">
           {/* Status Bar */}
-          <div className="pointer-events-none absolute left-0 right-0 top-0 z-50 flex h-14 items-start justify-between px-7 pt-[14px] text-[13px] font-bold tracking-wide text-[#000100]">
+          <div
+            className={`pointer-events-none absolute left-0 right-0 top-0 z-50 flex h-14 items-start justify-between px-7 pt-[14px] text-[13px] font-bold tracking-wide ${statusColor}`}
+          >
             <span>17:56</span>
             <div className="mt-0.5 flex items-center gap-1.5">
               <Signal className="h-[14px] w-[14px]" />
@@ -396,7 +409,11 @@ const PhoneShell = ({ children, forceMobile = false }) => {
           <div className="relative z-10 flex h-full min-h-0 flex-1 flex-col overflow-hidden">
             {children}
           </div>
-          <div className="pointer-events-none absolute bottom-2 left-1/2 z-30 h-1.5 w-36 -translate-x-1/2 rounded-full bg-[#000100]/40" />
+          <div
+            className={`pointer-events-none absolute bottom-2 left-1/2 z-30 h-1.5 w-36 -translate-x-1/2 rounded-full ${
+              isDark ? "bg-white/40" : "bg-[#000100]/40"
+            }`}
+          />
         </div>
       </div>
     </div>
@@ -434,40 +451,175 @@ const Screen = ({
   );
 };
 
+// --- Custom Modern Line-Art Icons for BottomNav ---
+
+const HomeIcon = ({ active }) => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    {active ? (
+      <path
+        d="M10.4 3.4a2.5 2.5 0 0 1 3.2 0l6.1 5c.5.4.8 1 .8 1.6v8.5a2.5 2.5 0 0 1-2.5 2.5H6a2.5 2.5 0 0 1-2.5-2.5V10c0-.6.3-1.2.8-1.6l6.1-5Z"
+        fill="currentColor"
+      />
+    ) : (
+      <path
+        d="M11.1 4.1a1.5 1.5 0 0 1 1.8 0l6.1 5c.3.2.5.6.5 1v8.4a1.5 1.5 0 0 1-1.5 1.5H6a1.5 1.5 0 0 1-1.5-1.5V10.1c0-.4.2-.8.5-1l6.1-5Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    )}
+  </svg>
+);
+
+const BriefcaseIcon = ({ active }) => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    {active ? (
+      <>
+        <rect x="3.5" y="8" width="17" height="11" rx="3" fill="currentColor" />
+        <path
+          d="M8.5 8V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v2"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
+      </>
+    ) : (
+      <>
+        <rect
+          x="3.5"
+          y="8"
+          width="17"
+          height="11"
+          rx="3"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        />
+        <path
+          d="M8.5 8V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v2"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+      </>
+    )}
+  </svg>
+);
+
+const UserIcon = ({ active }) => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    {active ? (
+      <>
+        <circle cx="12" cy="12" r="10" fill="currentColor" />
+        <circle cx="12" cy="9.5" r="2.75" fill="#ffffff" />
+        <path
+          d="M6.5 17.5c1-2.5 3-4 5.5-4s4.5 1.5 5.5 4"
+          stroke="#ffffff"
+          strokeWidth="2"
+          strokeLinecap="round"
+          fill="none"
+        />
+      </>
+    ) : (
+      <>
+        <circle
+          cx="12"
+          cy="12"
+          r="9.25"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        />
+        <circle
+          cx="12"
+          cy="9.5"
+          r="2.75"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        />
+        <path
+          d="M6.5 17.5c1-2.5 3-4 5.5-4s4.5 1.5 5.5 4"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          fill="none"
+        />
+      </>
+    )}
+  </svg>
+);
+
 function BottomNav({ go = () => {}, activeTab = "home" }) {
   const items = [
-    { icon: Home, label: "Home", key: "home", target: "dashboard" },
-    { icon: Briefcase, label: "Jobs", key: "jobs", target: "jobs" },
-    { icon: User, label: "Profile", key: "profile", target: "profile" },
+    { id: "home", target: "dashboard", label: "Home", CustomIcon: HomeIcon },
+    { id: "jobs", target: "jobs", label: "Jobs", CustomIcon: BriefcaseIcon },
+    {
+      id: "profile",
+      target: "profile",
+      label: "Profile",
+      CustomIcon: UserIcon,
+    },
   ];
+
   return (
-    <div className="flex w-full items-center rounded-full bg-[#000100] p-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.12)]">
+    <div className="flex h-[68px] w-full items-center rounded-[34px] bg-[#1c1c1e] p-2 shadow-[0_8px_30px_rgba(0,0,0,0.2)]">
       {items.map((item) => {
-        const Icon = item.icon;
-        const active = activeTab === item.key;
+        const active = activeTab === item.id;
+        const Icon = item.CustomIcon;
         return (
-          <div key={item.key} className="flex flex-1 justify-center">
+          <div key={item.id} className="flex flex-1 justify-center relative">
             <button
               type="button"
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => go(item.target, null, item.mode)}
-              className={`flex w-full items-center justify-center rounded-full py-3 transition-all duration-300 ease-out ${
+              className={`relative flex h-[52px] items-center justify-center rounded-full transition-colors duration-300 ${
                 active
-                  ? "gap-1.5 bg-[#a0fe08] px-4 text-[#000100]"
-                  : "gap-0 px-4 text-white/50 hover:text-white"
+                  ? "text-[#000100] px-5"
+                  : "text-[#8e8e93] hover:text-white w-[52px]"
               }`}
             >
-              <Icon
-                className="h-[22px] w-[22px] shrink-0"
-                strokeWidth={active ? 2.4 : 1.8}
-              />
-              <span
-                className={`overflow-hidden whitespace-nowrap text-[13px] font-bold transition-all duration-300 ease-out ${
-                  active ? "max-w-[80px] opacity-100" : "max-w-0 opacity-0"
-                }`}
-              >
-                {item.label}
-              </span>
+              {active && (
+                <motion.div
+                  layoutId="nav-pill"
+                  className="absolute inset-0 rounded-full bg-[#a0fe08] shadow-[0_0_12px_rgba(160,254,8,0.4)]"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
+              <div className="relative z-10 flex items-center justify-center">
+                <Icon active={active} />
+                <span
+                  className={`overflow-hidden whitespace-nowrap text-[13.5px] font-bold tracking-wide transition-all duration-300 ease-out ${
+                    active
+                      ? "max-w-[80px] opacity-100 ml-2.5"
+                      : "max-w-0 opacity-0 ml-0"
+                  }`}
+                >
+                  {item.label}
+                </span>
+              </div>
             </button>
           </div>
         );
@@ -491,7 +643,100 @@ const Header = ({ title, subtitle, icon, action }) => (
   </div>
 );
 
-function SplashScreen() {
+function OSHome({ go }) {
+  const [showNotif, setShowNotif] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowNotif(true), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const launchApp = (target) => {
+    go("splash", null, null, null, target);
+  };
+
+  return (
+    <PhoneShell theme="dark">
+      <div className="relative flex h-full flex-col bg-gradient-to-br from-[#0f172a] via-[#3b0764] to-[#000000] px-5 pb-4 pt-16">
+        <AnimatePresence>
+          {showNotif && (
+            <motion.button
+              initial={{ y: -100, opacity: 0, scale: 0.95 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: -100, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 28 }}
+              onClick={() => launchApp("morningBrief")}
+              className="absolute left-3 right-3 top-14 z-50 flex flex-col gap-2 rounded-[24px] bg-[#ffffff]/90 p-4 text-left shadow-[0_16px_40px_rgba(0,0,0,0.25)] backdrop-blur-xl transition-transform active:scale-[0.98]"
+            >
+              <div className="flex w-full items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="grid h-5 w-5 place-items-center rounded-md bg-[#000100]">
+                    <Star className="h-3 w-3 text-[#a0fe08]" />
+                  </div>
+                  <span className="text-[11px] font-bold uppercase tracking-widest text-[#000100]/60">
+                    Syncra
+                  </span>
+                </div>
+                <span className="text-[11px] font-medium text-[#000100]/40">
+                  now
+                </span>
+              </div>
+              <div>
+                <h4 className="text-[15px] font-bold text-[#000100]">
+                  Agent Update: New Drafts
+                </h4>
+                <p className="mt-0.5 text-[13.5px] leading-[1.3] text-[#000100]/80">
+                  I reviewed 142 new roles overnight and prepared 2 application
+                  drafts for TechFlow and Linear. Tap to review.
+                </p>
+              </div>
+            </motion.button>
+          )}
+        </AnimatePresence>
+
+        <div className="mt-8 grid grid-cols-4 gap-x-4 gap-y-8">
+          <button
+            onClick={() => launchApp("landing")}
+            className="flex flex-col items-center gap-1.5 transition active:opacity-60"
+          >
+            <div className="grid h-[62px] w-[62px] place-items-center rounded-[18px] bg-[#000100] shadow-lg">
+              <Star className="h-8 w-8 text-[#a0fe08]" />
+            </div>
+            <span className="text-[11px] font-medium text-white shadow-sm">
+              Syncra
+            </span>
+          </button>
+
+          {[...Array(11)].map((_, i) => (
+            <div
+              key={i}
+              className="flex flex-col items-center gap-1.5 opacity-60"
+            >
+              <div className="h-[62px] w-[62px] rounded-[18px] bg-white/20" />
+              <span className="text-[11px] font-medium text-white">App</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-auto mb-1 flex h-[86px] items-center justify-between rounded-[32px] bg-white/20 px-4 backdrop-blur-2xl">
+          {[...Array(4)].map((_, i) => (
+            <div
+              key={i}
+              className="h-[60px] w-[60px] rounded-[16px] bg-white/30"
+            />
+          ))}
+        </div>
+      </div>
+    </PhoneShell>
+  );
+}
+
+function SplashScreen({ go, target = "landing" }) {
+  useEffect(() => {
+    const timer = setTimeout(() => go(target), 2300);
+    return () => clearTimeout(timer);
+  }, [go, target]);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#eaeceb] px-6 text-[#000100]">
       <div className="flex flex-col items-center text-center">
@@ -507,11 +752,15 @@ function SplashScreen() {
             transition={{ duration: 1.7, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.img
-            src={syncraLogoPng}
+            src={LOGO_IMG_URL}
             alt="Syncra AI logo"
             className="relative z-10 h-60 w-60 object-contain drop-shadow-[0_18px_35px_rgba(0,1,0,0.18)] sm:h-72 sm:w-72"
             animate={{ y: [0, -6, 0] }}
             transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = syncraLogoPng;
+            }}
           />
         </motion.div>
 
@@ -558,11 +807,15 @@ function LoginLoadingScreen({ go }) {
             transition={{ duration: 1.7, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.img
-            src={syncraLogoPng}
+            src={LOGO_IMG_URL}
             alt="Syncra AI logo"
             className="relative z-10 h-52 w-52 object-contain drop-shadow-[0_18px_35px_rgba(0,1,0,0.18)]"
             animate={{ y: [0, -6, 0] }}
             transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = syncraLogoPng;
+            }}
           />
         </motion.div>
 
@@ -657,7 +910,7 @@ function Landing({ go }) {
   );
 }
 
-function Login({ go, resumesCount = 0 }) {
+function Login({ go }) {
   const nextAfterLogin = "dashboard";
 
   return (
@@ -750,7 +1003,7 @@ function Login({ go, resumesCount = 0 }) {
             onClick={() => go(nextAfterLogin)}
             className="w-full rounded-full bg-[#a0fe08] py-3 text-[15px] font-bold text-[#000100] border-[3px] border-[#000100] shadow-[4px_4px_0px_#000100] transition active:translate-y-[2px] active:translate-x-[2px] active:shadow-[0px_0px_0px_#000100]"
           >
-            Guest
+            Continue as Guest
           </button>
           <p className="mt-2 px-2 text-center text-[11px] leading-5 text-[#666666]">
             By continuing, you agree to our{" "}
@@ -853,6 +1106,74 @@ function SignUp({ go }) {
   );
 }
 
+function MorningBrief({ go, userName }) {
+  return (
+    <PhoneShell theme="dark">
+      <div className="flex h-full flex-col justify-center bg-[#000100] px-8 text-left text-white relative overflow-hidden">
+        {/* Background ambient glow pushed to the right side */}
+        <motion.div
+          animate={{ scale: [1, 1.1, 1], opacity: [0.25, 0.4, 0.25] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-1/4 -right-20 h-[400px] w-[400px] rounded-full bg-[#a0fe08]/20 blur-[100px]"
+        />
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          className="relative z-10 flex flex-col items-start"
+        >
+          <h2 className="text-[40px] font-bold leading-[1.1] tracking-tight text-white">
+            Good morning,
+            <br />
+            {userName}.
+          </h2>
+
+          <div className="mt-12">
+            <p className="text-[17px] font-medium text-white/60">
+              While you were away, I scanned
+            </p>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, x: -10 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              transition={{
+                delay: 0.3,
+                duration: 0.7,
+                type: "spring",
+                bounce: 0.4,
+              }}
+              className="my-1 text-[100px] leading-[1.05] font-black text-[#a0fe08] tracking-tighter"
+            >
+              142
+            </motion.div>
+
+            <p className="text-[17px] font-medium leading-relaxed text-white/60 max-w-[280px]">
+              new roles. <span className="text-white">2</span> perfectly matched
+              your Senior Designer goal. I've tailored your resume and prepared
+              application drafts.
+            </p>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.6, type: "spring" }}
+          className="absolute bottom-10 right-8 z-10"
+        >
+          <button
+            onClick={() => go("dashboard")}
+            className="grid h-16 w-16 place-items-center rounded-full bg-[#a0fe08] text-[#000100] shadow-[0_8px_30px_rgba(160,254,8,0.25)] transition active:scale-90 hover:scale-105"
+          >
+            <ChevronRight className="h-7 w-7 ml-0.5" strokeWidth={3} />
+          </button>
+        </motion.div>
+      </div>
+    </PhoneShell>
+  );
+}
+
 function ResumeUploadCard({ item, uploading = false, onOpen, onDelete }) {
   const progress = item.progress ?? 100;
   const isError = item.status === "error";
@@ -863,7 +1184,6 @@ function ResumeUploadCard({ item, uploading = false, onOpen, onDelete }) {
         isError ? "bg-red-50 border-red-200" : "bg-[#ffffff]"
       }`}
     >
-      {/* Background fill handles progress organically */}
       {uploading && !isError && (
         <div
           className="absolute bottom-0 left-0 top-0 bg-[#a0fe08]/20 transition-all duration-300"
@@ -1442,7 +1762,6 @@ function AIChatbot({
   return (
     <PhoneShell>
       <div className="flex h-full min-h-0 flex-1 flex-col bg-[#eaeceb] pb-6">
-        {/* Fixed top area */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -1456,8 +1775,15 @@ function AIChatbot({
           />
 
           <div className="flex items-center gap-2 rounded-full border border-white/40 bg-white/60 backdrop-blur-md px-4 py-2 shadow-sm">
+            {isTyping ? (
+              <div className="h-2 w-2 animate-pulse rounded-full bg-[#a0fe08] shadow-[0_0_8px_rgba(160,254,8,0.8)]" />
+            ) : (
+              <div className="grid h-4 w-4 place-items-center rounded-full bg-[#000100]">
+                <Star className="h-2.5 w-2.5 text-[#a0fe08]" />
+              </div>
+            )}
             <span className="text-xs font-bold text-[#000100]">
-              Syncra AI 2.5 Pro
+              {isTyping ? "Syncra is drafting..." : "Syncra AI 2.5 Pro"}
             </span>
           </div>
 
@@ -1475,7 +1801,6 @@ function AIChatbot({
           )}
         </motion.div>
 
-        {/* Scrollable message area OR Empty State Orb */}
         {isChatOpen &&
         messages.length === 1 &&
         !isTyping &&
@@ -1619,9 +1944,7 @@ function AIChatbot({
           </div>
         )}
 
-        {/* Fixed bottom composer */}
         <div className="relative z-20 shrink-0 bg-gradient-to-t from-[#eaeceb] via-[#eaeceb] to-transparent px-4 sm:px-6 pb-0 pt-2">
-          {/* Upload Queue Indicators */}
           {uploadQueue.length > 0 && (
             <div className="mb-2 flex flex-col gap-2">
               {uploadQueue.map((item) => (
@@ -1732,7 +2055,6 @@ function AIChatbot({
             </div>
           </div>
 
-          {/* Attachment Bottom Sheet Modal */}
           <AnimatePresence>
             {isAttachModalOpen && (
               <>
@@ -1868,7 +2190,7 @@ function Setup({ go }) {
   );
 }
 
-function Story({ go }) {
+function Story({ go, userName }) {
   const quick = [
     "What roles fit me?",
     "Improve my resume",
@@ -1901,8 +2223,8 @@ function Story({ go }) {
           <div
             className={`max-w-[82%] rounded-2xl rounded-tl-sm border border-[#d1d3d2] bg-[#ffffff] p-4 text-sm leading-6 text-[#000100] ${neoOut} `}
           >
-            Hi Chris, I&apos;ve reviewed your goal. Tell me what you&apos;re
-            looking for and I&apos;ll tailor matches.
+            Hi {userName}, I&apos;ve reviewed your goal. Tell me what
+            you&apos;re looking for and I&apos;ll tailor matches.
           </div>
           <div className="ml-auto max-w-[82%] rounded-2xl rounded-tr-sm bg-[#000100] p-4 text-sm leading-6 text-white ">
             I want an entry-level UX or frontend role where I can use design and
@@ -2229,8 +2551,11 @@ function Dashboard({
   onStartChatTransition = () => {},
   onUploadResume = () => {},
   uploadQueue = [],
+  userName = "User",
 }) {
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
+  const [portfolioLink, setPortfolioLink] = useState("");
+  const [actionResolved, setActionResolved] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleFiles = (fileList) => {
@@ -2248,8 +2573,8 @@ function Dashboard({
       id: 1,
       time: "09:30",
       sub: "AM",
-      title: "New Match Found!",
-      desc: "We found a 98% match for a Senior Product Designer role at TechFlow.",
+      title: "Prepared 2 new drafts",
+      desc: "Based on overnight matches, I prepared applications for TechFlow and Linear.",
       active: true,
     },
     {
@@ -2274,7 +2599,7 @@ function Dashboard({
     <motion.div
       initial={false}
       animate={{
-        bottom: isChatTransition ? "24px" : "92px",
+        bottom: isChatTransition ? "24px" : "112px",
         left: isChatTransition ? "16px" : "24px",
         right: isChatTransition ? "16px" : "24px",
       }}
@@ -2363,15 +2688,69 @@ function Dashboard({
           <div className="flex items-center gap-3">
             <button
               onClick={() => go("profile")}
-              className="grid h-12 w-12 place-items-center rounded-full bg-[#000100] text-white shadow-sm transition active:opacity-80"
+              className="h-11 w-11 overflow-hidden rounded-full bg-[#000100] shadow-sm transition active:opacity-80"
             >
-              <span className="text-2xl">🪙</span>
+              <img
+                src={PROFILE_IMG_URL}
+                alt="Profile"
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = `https://ui-avatars.com/api/?name=${userName}&background=000100&color=a0fe08`;
+                }}
+              />
             </button>
-            <div className="text-2xl font-black tracking-tight text-[#000100]">
-              syncra
+            <div className="text-xl font-black tracking-tight text-[#000100]">
+              {userName}
             </div>
           </div>
         </div>
+
+        {/* Agent Action Required */}
+        <AnimatePresence>
+          {!actionResolved && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, scale: 0.95 }}
+              animate={{ opacity: 1, height: "auto", scale: 1 }}
+              exit={{ opacity: 0, height: 0, scale: 0.95, marginBottom: 0 }}
+              className="mb-6 overflow-hidden"
+            >
+              <div className="rounded-3xl bg-[#000100] p-5 shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
+                <div className="mb-3 flex items-center gap-2 text-[#fbbf24]">
+                  <div className="grid h-6 w-6 place-items-center rounded-full bg-[#fbbf24]/20">
+                    <AlertCircle className="h-3.5 w-3.5 text-[#fbbf24]" />
+                  </div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#fbbf24]">
+                    Action Required
+                  </span>
+                </div>
+                <h3 className="text-sm font-bold text-white">
+                  Missing Portfolio Link
+                </h3>
+                <p className="mt-1 text-[13px] leading-relaxed text-white/70">
+                  Notion requires a portfolio link to complete the Product
+                  Design Intern application draft.
+                </p>
+                <div className="mt-4 flex items-center gap-2 rounded-2xl bg-white/10 p-1.5 focus-within:bg-white/20 transition-colors">
+                  <input
+                    type="url"
+                    value={portfolioLink}
+                    onChange={(e) => setPortfolioLink(e.target.value)}
+                    placeholder="Paste Figma or website link..."
+                    className="flex-1 bg-transparent px-3 text-sm text-white outline-none placeholder:text-white/40"
+                  />
+                  <button
+                    onClick={() => setActionResolved(true)}
+                    disabled={!portfolioLink}
+                    className="grid h-9 w-9 place-items-center rounded-xl bg-[#a0fe08] text-[#000100] disabled:bg-white/20 disabled:text-white/40 disabled:opacity-100 transition-colors"
+                  >
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* AI Profile Summary */}
         <Card className="mb-6 border-none shadow-sm">
@@ -2585,8 +2964,8 @@ function JobsScreen({
   const [isSelectionMode, setIsSelectionMode] = useState(false);
 
   const defaultFilters = {
-    workSetting: ["Any"],
-    experience: ["Any"],
+    workSetting: ["All"],
+    experience: ["All"],
     skills: [],
     roles: [],
   };
@@ -2594,9 +2973,9 @@ function JobsScreen({
   const [activeFilters, setActiveFilters] = useState(defaultFilters);
   const [tempFilters, setTempFilters] = useState(defaultFilters);
 
-  const workSettingsOptions = ["Any", "Remote", "Hybrid", "On-site"];
+  const workSettingsOptions = ["All", "Remote", "Hybrid", "On-site"];
   const experienceOptions = [
-    "Any",
+    "All",
     "Internship",
     "Entry Level",
     "Mid Level",
@@ -2637,24 +3016,15 @@ function JobsScreen({
     setTempMatchThreshold(50);
   };
 
-  const showAllJobs = () => {
-    setDashboardFilter("all");
-    setSearchQuery("");
-    setActiveFilters(defaultFilters);
-    setTempFilters(defaultFilters);
-    setMatchThreshold(50);
-    setTempMatchThreshold(50);
-  };
-
   const toggleChip = (category, value) => {
     setTempFilters((prev) => {
       const current = prev[category];
-      if (value === "Any") return { ...prev, [category]: ["Any"] };
+      if (value === "All") return { ...prev, [category]: ["All"] };
 
-      let newArr = current.filter((v) => v !== "Any");
+      let newArr = current.filter((v) => v !== "All");
       if (newArr.includes(value)) {
         newArr = newArr.filter((v) => v !== value);
-        if (newArr.length === 0) newArr = ["Any"];
+        if (newArr.length === 0) newArr = ["All"];
       } else {
         newArr = [...newArr, value];
       }
@@ -2708,7 +3078,7 @@ function JobsScreen({
 
     // Work Setting
     if (
-      !activeFilters.workSetting.includes("Any") &&
+      !activeFilters.workSetting.includes("All") &&
       !activeFilters.workSetting.includes(job.workSetting)
     ) {
       return false;
@@ -2716,7 +3086,7 @@ function JobsScreen({
 
     // Experience Level
     if (
-      !activeFilters.experience.includes("Any") &&
+      !activeFilters.experience.includes("All") &&
       !activeFilters.experience.includes(job.type)
     ) {
       return false;
@@ -2763,8 +3133,8 @@ function JobsScreen({
   return (
     <Screen nav activeTab="jobs" go={go} className="relative">
       {/* Header */}
-      <div className="sticky top-0 z-40 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
-        <h1 className="text-2xl font-bold tracking-tight text-[#000100]">
+      <div className="sticky top-0 z-40 -mx-6 -mt-8 mb-5 flex h-[88px] items-end justify-between bg-[#eaeceb] px-6 pb-4">
+        <h1 className="text-2xl font-bold tracking-tight text-[#000100] mb-0.5">
           Job Results
         </h1>
         <button
@@ -2772,7 +3142,7 @@ function JobsScreen({
             setIsSelectionMode(!isSelectionMode);
             if (isSelectionMode) setSelectedJobIds([]);
           }}
-          className="text-sm font-bold text-[#000100] transition active:opacity-70"
+          className="text-sm font-bold text-[#000100] transition active:opacity-70 mb-1"
         >
           {isSelectionMode ? "Cancel" : "Select"}
         </button>
@@ -2797,17 +3167,7 @@ function JobsScreen({
           className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#d1d3d2] bg-[#000100] px-4 py-2 text-xs font-bold text-white transition active:opacity-80"
         >
           <Filter className="h-3.5 w-3.5" />
-          Filter
-        </button>
-        <button
-          onClick={showAllJobs}
-          className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition ${
-            dashboardFilter === "all"
-              ? "bg-[#000100] text-white"
-              : "border border-[#d1d3d2] bg-[#ffffff] text-[#000100]"
-          }`}
-        >
-          All Jobs
+          Filter / All
         </button>
         {filters.map((f) => {
           const FIcon = f.icon;
@@ -2916,9 +3276,13 @@ function JobsScreen({
                           <span className="rounded-full bg-[#000100] px-2.5 py-1 text-[10px] font-bold text-white">
                             Applied
                           </span>
+                        ) : job.agentStatus === "drafted" ? (
+                          <span className="flex items-center gap-1 rounded-full bg-[#000100] px-2.5 py-1 text-[10px] font-bold text-[#a0fe08]">
+                            <Sparkles className="h-3 w-3" /> Drafted
+                          </span>
                         ) : (
                           <span className="rounded-full bg-[#a0fe08] px-2.5 py-1 text-[10px] font-bold text-[#000100]">
-                            {job.match}%
+                            {job.match}% match
                           </span>
                         )}
                         <button
@@ -3229,270 +3593,6 @@ function JobsScreen({
   );
 }
 
-function JobSetup({ go }) {
-  return (
-    <PhoneShell>
-      <Screen>
-        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
-          <BackButton onClick={() => go("dashboard")} />
-        </div>
-        <Header
-          title="AI Job Search Setup"
-          subtitle="Choose resume and search sources"
-          icon={
-            <GlassIcon className="h-12 w-12 rounded-2xl">
-              <Search className="h-6 w-6 text-white" />
-            </GlassIcon>
-          }
-        />
-        <Card>
-          <h3 className="font-bold text-[#000100]">Search preferences</h3>
-          <div className="mt-4 space-y-3 text-sm text-[#000100]">
-            <div className="flex justify-between">
-              <span>Role</span>
-              <b>UX / Frontend</b>
-            </div>
-            <div className="flex justify-between">
-              <span>Location</span>
-              <b>Remote or Taiwan</b>
-            </div>
-            <div className="flex justify-between">
-              <span>Resume</span>
-              <b>ATS Resume v2</b>
-            </div>
-          </div>
-        </Card>
-        <Card className="mt-4">
-          <h3 className="font-bold text-[#000100]">Sources</h3>
-          <div className="mt-3 grid gap-2">
-            {[
-              "LinkedIn",
-              "Indeed",
-              "Company career pages",
-              "Internship platforms",
-            ].map((s) => (
-              <div
-                key={s}
-                className="flex items-center gap-2 text-sm text-[#000100]"
-              >
-                <CheckCircle2 className="h-4 w-4 text-white" />
-                {s}
-              </div>
-            ))}
-          </div>
-        </Card>
-        <div className="mt-6 space-y-3">
-          <PrimaryButton onClick={() => go("running")}>
-            Start AI Job Search
-          </PrimaryButton>
-          <SecondaryButton>Edit Preferences</SecondaryButton>
-          <SecondaryButton onClick={() => go("dashboard")}>
-            Edit Resume First
-          </SecondaryButton>
-        </div>
-      </Screen>
-    </PhoneShell>
-  );
-}
-
-function Running({ go }) {
-  const steps = [
-    "Searching platforms",
-    "Checking requirements",
-    "Comparing with resume",
-    "Filtering by preferences",
-    "Ranking best matches",
-  ];
-  return (
-    <PhoneShell>
-      <Screen>
-        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
-          <BackButton onClick={() => go("jobSetup")} />
-        </div>
-        <Header
-          title="AI Agent Running"
-          subtitle="Background job search"
-          icon={
-            <GlassIcon className="h-12 w-12 rounded-2xl">
-              <InfinityIcon className="h-6 w-6 text-white" />
-            </GlassIcon>
-          }
-        />
-        <Card className="text-center">
-          <div className="mx-auto mb-5 grid h-24 w-24 place-items-center rounded-full bg-[#000100] text-white ">
-            <Sparkles className="h-10 w-10" />
-          </div>
-          <h3 className="font-bold text-[#000100]">
-            Searching jobs in the background
-          </h3>
-          <p className="mt-2 text-sm leading-6 text-[#666666]">
-            You can close the app. I&apos;ll notify you when the search is
-            complete.
-          </p>
-        </Card>
-        <div className="mt-4 space-y-3">
-          {steps.map((s, i) => (
-            <Card key={s} className="flex items-center gap-3 py-4">
-              <CheckCircle2
-                className={`h-5 w-5 ${
-                  i < 3 ? "text-[#a0fe08]" : "text-[#a0fe08]"
-                }`}
-              />
-              <span className="text-sm font-medium text-[#000100]">{s}</span>
-            </Card>
-          ))}
-        </div>
-        <div className="mt-6 space-y-3">
-          <PrimaryButton onClick={() => go("complete")}>
-            Notify Me When Done
-          </PrimaryButton>
-          <SecondaryButton onClick={() => go("results")}>
-            View Live Progress
-          </SecondaryButton>
-          <button
-            onClick={() => go("dashboard")}
-            className="w-full py-2 text-sm text-[#666666]"
-          >
-            Cancel Search
-          </button>
-        </div>
-      </Screen>
-    </PhoneShell>
-  );
-}
-
-function Complete({ go }) {
-  return (
-    <PhoneShell>
-      <Screen>
-        <div className="flex min-h-[610px] flex-col justify-center">
-          <Card className="text-center">
-            <div
-              className={`mx-auto mb-4 grid h-20 w-20 place-items-center rounded-3xl bg-[#eaeceb] text-white ${neoOut}`}
-            >
-              <Bell className="h-9 w-9" />
-            </div>
-            <h1 className="text-xl font-bold text-[#000100]">
-              Your job search is complete.
-            </h1>
-            <p className="mt-3 text-sm leading-6 text-[#666666]">
-              32 jobs found. 8 are strong matches. Tap to review your best
-              opportunities.
-            </p>
-            <PrimaryButton className="mt-6" onClick={() => go("results")}>
-              Review best opportunities
-            </PrimaryButton>
-          </Card>
-        </div>
-      </Screen>
-    </PhoneShell>
-  );
-}
-
-function JobCard({ job, go }) {
-  return (
-    <Card className="mb-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex gap-3">
-          <div
-            className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#eaeceb] text-sm font-bold text-[#000100] ${neoIn}`}
-          >
-            {job.company[0]}
-          </div>
-          <div>
-            <h3 className="font-bold text-[#000100]">{job.company}</h3>
-            <p className="text-sm text-[#000100]">{job.title}</p>
-            <p className="mt-1 flex items-center gap-1 text-xs text-[#666666]">
-              <MapPin className="h-3 w-3" /> {job.location}
-            </p>
-          </div>
-        </div>
-        <span className="rounded-full bg-[#a0fe08] px-3 py-1 text-xs font-bold text-[#000100]">
-          {job.match}% match
-        </span>
-      </div>
-      <p className="mt-3 text-sm leading-6 text-[#666666]">{job.why}</p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <StepPill>{job.type}</StepPill>
-        <StepPill>{job.salary}</StepPill>
-        <StepPill>Missing: {job.missing[0]}</StepPill>
-      </div>
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        <button
-          onClick={() => go("detail", job)}
-          className="rounded-xl bg-[#000100] py-2 text-xs font-bold text-white "
-        >
-          Details
-        </button>
-        <button
-          className={`rounded-xl bg-[#ffffff] py-2 text-xs font-bold text-[#000100] ${neoOut}`}
-        >
-          Save
-        </button>
-        <button
-          onClick={() => go("tailor", job)}
-          className={`rounded-xl bg-[#ffffff] py-2 text-xs font-bold text-[#000100] ${neoOut}`}
-        >
-          Apply
-        </button>
-      </div>
-    </Card>
-  );
-}
-
-function Results({ go }) {
-  return (
-    <PhoneShell>
-      <Screen nav go={go} activeTab="jobs">
-        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
-          <BackButton onClick={() => go("dashboard")} />
-        </div>
-        <Header
-          title="Job Results"
-          subtitle="32 jobs found"
-          icon={
-            <GlassIcon className="h-12 w-12 rounded-2xl">
-              <Briefcase className="h-6 w-6 text-white" />
-            </GlassIcon>
-          }
-        />
-        <div className="mb-4 grid grid-cols-3 gap-2 text-center">
-          {[
-            ["8", "Strong"],
-            ["15", "Medium"],
-            ["9", "Low"],
-          ].map(([n, l]) => (
-            <Card key={l} className="p-3">
-              <p className="font-bold text-[#000100]">{n}</p>
-              <p className="text-[11px] text-[#666666]">{l}</p>
-            </Card>
-          ))}
-        </div>
-        <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
-          {[
-            "Best Match",
-            "Remote",
-            "Internship",
-            "Entry Level",
-            "High Salary",
-            "Saved",
-          ].map((f) => (
-            <button
-              key={f}
-              className={`shrink-0 rounded-full border border-[#d1d3d2] bg-[#ffffff] px-4 py-2 text-xs font-bold text-[#000100] ${neoOut}`}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-        {jobs.map((job) => (
-          <JobCard key={job.id} job={job} go={go} />
-        ))}
-      </Screen>
-    </PhoneShell>
-  );
-}
-
 function Detail({ go, selectedJob }) {
   const job = selectedJob || jobs[0];
   return (
@@ -3718,72 +3818,8 @@ function Submitted({ go, selectedJob, onApply = () => {} }) {
               <PrimaryButton onClick={() => go("dashboard")}>
                 Back to Home
               </PrimaryButton>
-              {/*<SecondaryButton onClick={() => go("dashboard")}>Browse More Jobs</SecondaryButton>*/}
             </div>
           </Card>
-        </div>
-      </Screen>
-    </PhoneShell>
-  );
-}
-
-function Tracker({ go }) {
-  const statuses = ["Saved", "Applied", "Interviewing", "Rejected", "Offer"];
-  return (
-    <PhoneShell>
-      <Screen nav go={go} activeTab="jobs">
-        <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-5 flex items-center justify-between bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
-          <BackButton onClick={() => go("dashboard")} />
-        </div>
-        <Header
-          title="Application Tracker"
-          subtitle="Track every opportunity"
-          icon={
-            <GlassIcon className="h-12 w-12 rounded-2xl">
-              <ClipboardList className="h-6 w-6 text-white" />
-            </GlassIcon>
-          }
-        />
-        <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
-          {statuses.map((s) => (
-            <button
-              key={s}
-              className={`shrink-0 rounded-full border border-[#d1d3d2] bg-[#ffffff] px-4 py-2 text-xs font-bold text-[#000100] ${neoOut}`}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-        <div className="space-y-3">
-          {applications.map((a) => (
-            <Card key={a.company}>
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-bold text-[#000100]">{a.company}</h3>
-                  <p className="text-sm text-[#666666]">{a.role}</p>
-                </div>
-                <StepPill>{a.status}</StepPill>
-              </div>
-              <p className="mt-3 text-xs text-[#666666]">
-                Applied {a.date} · {a.resume}
-              </p>
-              <div className="mt-4 grid grid-cols-3 gap-2">
-                <button
-                  className={`rounded-xl bg-[#ffffff] py-2 text-xs font-bold ${neoOut}`}
-                >
-                  Update
-                </button>
-                <button className="rounded-xl bg-[#000100] py-2 text-xs font-bold text-white ">
-                  Interview
-                </button>
-                <button
-                  className={`rounded-xl bg-[#ffffff] py-2 text-xs font-bold ${neoOut}`}
-                >
-                  Resume
-                </button>
-              </div>
-            </Card>
-          ))}
         </div>
       </Screen>
     </PhoneShell>
@@ -3984,6 +4020,7 @@ function Profile({
   savedCount,
   jobsCount,
   resumesCount = 0,
+  userName = "User",
 }) {
   const accountRows = [{ icon: Settings, label: "Account Settings" }];
 
@@ -3998,9 +4035,7 @@ function Profile({
   return (
     <PhoneShell>
       <Screen nav={!noNav} floatingNav={noNav} go={go} activeTab="profile">
-        {/* Standardized Header */}
         <div className="sticky top-0 z-50 -mx-6 -mt-8 mb-6 flex items-center gap-2 bg-[#eaeceb] px-6 pt-[52px] pb-3 min-h-[88px]">
-          <BackButton onClick={() => go("dashboard")} />
           <h1 className="text-2xl font-bold tracking-tight text-[#000100]">
             Settings
           </h1>
@@ -4008,12 +4043,20 @@ function Profile({
 
         <div className="mb-6 overflow-hidden rounded-3xl border border-[#d1d3d2] bg-[#ffffff]">
           <div className="flex items-center gap-4 p-4">
-            <div className="grid h-14 w-14 place-items-center rounded-full bg-[#000100] text-white">
-              <span className="text-2xl">🪙</span>
+            <div className="h-14 w-14 overflow-hidden rounded-full bg-[#eaeceb]">
+              <img
+                src={PROFILE_IMG_URL}
+                alt="Profile"
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = `https://ui-avatars.com/api/?name=${userName}&background=000100&color=a0fe08`;
+                }}
+              />
             </div>
             <div>
-              <h2 className="font-bold text-[#000100]">Chris Anderson</h2>
-              <p className="text-sm text-[#666666]">@chrisanderson</p>
+              <h2 className="font-bold text-[#000100]">{userName}</h2>
+              <p className="text-sm text-[#666666]">UX Designer</p>
             </div>
             <ChevronRight className="ml-auto h-5 w-5 text-[#666666]" />
           </div>
@@ -4282,7 +4325,8 @@ function ViewSwitchButton({ viewMode, onToggle }) {
 }
 
 export default function App() {
-  const [screen, setScreen] = useState("landing");
+  const [userName, setUserName] = useState("Daryn");
+  const [screen, setScreen] = useState("osHome");
   const [showSplash, setShowSplash] = useState(false);
   const [selectedJob, setSelectedJob] = useState(jobs[0]);
   const [selectedResume, setSelectedResume] = useState(null);
@@ -4306,6 +4350,7 @@ export default function App() {
   });
   const [agentResumeNotice, setAgentResumeNotice] = useState(null);
   const [isChatTransition, setIsChatTransition] = useState(false);
+  const [splashNext, setSplashNext] = useState("landing");
 
   const uploadTimers = useRef([]);
   const agentResumeTimer = useRef(null);
@@ -4314,11 +4359,6 @@ export default function App() {
   useEffect(() => {
     resumesRef.current = resumes;
   }, [resumes]);
-
-  useEffect(() => {
-    const splashTimer = setTimeout(() => setShowSplash(false), 2300);
-    return () => clearTimeout(splashTimer);
-  }, []);
 
   useEffect(() => {
     return () => {
@@ -4452,7 +4492,7 @@ export default function App() {
     setAppliedJobs((prev) => (prev.includes(jobId) ? prev : [...prev, jobId]));
   };
 
-  const go = (next, job, mode, filterParam) => {
+  const go = (next, job, mode, filterParam, splashTargetStr) => {
     const shouldKeepWindowScroll =
       next === "aiChatbot" && (mode === "chatOpen" || mode === "createResume");
     const savedScrollX =
@@ -4474,6 +4514,8 @@ export default function App() {
     }
     if (filterParam) setDashboardFilter(filterParam);
     if (next === "dashboard") setHasReachedDashboard(true);
+    if (splashTargetStr) setSplashNext(splashTargetStr);
+
     setScreen(next);
 
     if (shouldKeepWindowScroll && typeof window !== "undefined") {
@@ -4486,6 +4528,10 @@ export default function App() {
 
   const component = useMemo(() => {
     switch (screen) {
+      case "osHome":
+        return <OSHome go={go} />;
+      case "splash":
+        return <SplashScreen go={go} target={splashNext} />;
       case "landing":
         return <Landing go={go} />;
       case "loginLoading":
@@ -4494,6 +4540,8 @@ export default function App() {
         return <Login go={go} resumesCount={resumes.length} />;
       case "signup":
         return <SignUp go={go} />;
+      case "morningBrief":
+        return <MorningBrief go={go} userName={userName} />;
       case "aiChatbot":
         return (
           <AIChatbot
@@ -4515,7 +4563,7 @@ export default function App() {
       case "setup":
         return <Setup go={go} />;
       case "story":
-        return <Story go={go} />;
+        return <Story go={go} userName={userName} />;
       case "builder":
         return <Builder go={go} />;
       case "analysis":
@@ -4540,6 +4588,7 @@ export default function App() {
             }}
             onUploadResume={handleUploadResume}
             uploadQueue={uploadQueue}
+            userName={userName}
           />
         );
       case "jobs":
@@ -4577,8 +4626,6 @@ export default function App() {
             onApply={handleApplyJob}
           />
         );
-      case "tracker":
-        return <Tracker go={go} />;
       case "resumes":
         return (
           <ResumesScreen
@@ -4608,6 +4655,7 @@ export default function App() {
             savedCount={savedJobs.length}
             jobsCount={jobs.length}
             resumesCount={resumes.length}
+            userName={userName}
           />
         );
       default:
@@ -4629,98 +4677,99 @@ export default function App() {
     resumes,
     uploadQueue,
     isChatTransition,
+    splashNext,
+    userName,
   ]);
 
-  const insideAppTransition = screen !== "landing";
+  const insideAppTransition =
+    screen !== "landing" &&
+    screen !== "osHome" &&
+    screen !== "splash" &&
+    screen !== "loginLoading" &&
+    screen !== "login" &&
+    screen !== "signup" &&
+    screen !== "morningBrief";
+
   const hideFirstTimeCreateResumeNav =
     screen === "aiChatbot" &&
     chatMode === "createResume" &&
     chatBackTarget === "login";
-  const tabbedScreens = ["dashboard", "jobs", "profile", "tracker"];
+
+  const tabbedScreens = ["dashboard", "jobs", "profile"];
+
   const isTabbed =
     tabbedScreens.includes(screen) && !hideFirstTimeCreateResumeNav;
+
   const activeTab =
-    screen === "profile" || screen === "tracker"
-      ? "profile"
-      : screen === "jobs"
-      ? "jobs"
-      : screen === "aiChatbot"
-      ? "home"
-      : "home";
+    screen === "profile" ? "profile" : screen === "jobs" ? "jobs" : "home";
 
   return (
     <ViewModeContext.Provider value={viewMode}>
       <main className="min-h-screen bg-[#eaeceb] font-sans">
-        {showSplash ? (
-          <SplashScreen />
-        ) : (
-          <>
-            <div className="fixed left-4 top-4 z-40 flex flex-wrap items-center gap-2">
-              <div className="rounded-full border border-[#d1d3d2] bg-[#ffffff] px-4 py-2 text-xs font-bold text-[#000100]">
-                AI Career Copilot Prototype · {screen}
-              </div>
-
-              {screen !== "landing" && (
-                <button
-                  onClick={() => {
-                    setScreen("landing");
-                  }}
-                  className="rounded-full border border-[#d1d3d2] bg-[#ffffff] px-4 py-2 text-xs font-bold text-[#000100] transition hover:bg-[#eaeceb]"
-                >
-                  ← Get Started Screen
-                </button>
-              )}
-
-              {screen !== "landing" && (
-                <ViewSwitchButton
-                  viewMode={viewMode}
-                  onToggle={() =>
-                    setViewMode((mode) =>
-                      mode === "mobile" ? "web" : "mobile"
-                    )
-                  }
-                />
-              )}
+        <>
+          <div className="fixed left-4 top-4 z-40 flex flex-wrap items-center gap-2">
+            <div className="rounded-full border border-[#d1d3d2] bg-[#ffffff] px-4 py-2 text-xs font-bold text-[#000100]">
+              AI Career Copilot Prototype · {screen}
             </div>
 
-            {insideAppTransition ? (
-              <PhoneShell>
-                <ShellStripContext.Provider value={true}>
-                  <div className="relative flex h-full min-h-0 flex-1 flex-col">
-                    <div className="relative min-h-0 flex-1 overflow-hidden">
-                      <div className="absolute inset-0 h-full min-h-0">
-                        {component}
-                      </div>
-                    </div>
-                    <AgentResumeNotification
-                      job={agentResumeJob}
-                      onClick={handleAgentNotificationClick}
-                    />
-                    {/* Persistent floating nav bar for tabbed screens */}
-                    <AnimatePresence>
-                      {isTabbed && !isChatTransition && (
-                        <motion.div
-                          initial={{ y: 50, opacity: 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          exit={{ y: 80, opacity: 0 }}
-                          transition={{
-                            duration: 0.35,
-                            ease: [0.22, 1, 0.36, 1],
-                          }}
-                          className="absolute bottom-6 left-6 right-6 z-40"
-                        >
-                          <BottomNav go={go} activeTab={activeTab} />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                </ShellStripContext.Provider>
-              </PhoneShell>
-            ) : (
-              component
+            {screen !== "osHome" && (
+              <button
+                onClick={() => {
+                  setScreen("osHome");
+                }}
+                className="rounded-full border border-[#d1d3d2] bg-[#ffffff] px-4 py-2 text-xs font-bold text-[#000100] transition hover:bg-[#eaeceb]"
+              >
+                ← Return to OS
+              </button>
             )}
-          </>
-        )}
+
+            {screen !== "osHome" && (
+              <ViewSwitchButton
+                viewMode={viewMode}
+                onToggle={() =>
+                  setViewMode((mode) => (mode === "mobile" ? "web" : "mobile"))
+                }
+              />
+            )}
+          </div>
+
+          {insideAppTransition ? (
+            <PhoneShell>
+              <ShellStripContext.Provider value={true}>
+                <div className="relative flex h-full min-h-0 flex-1 flex-col">
+                  <div className="relative min-h-0 flex-1 overflow-hidden">
+                    <div className="absolute inset-0 h-full min-h-0">
+                      {component}
+                    </div>
+                  </div>
+                  <AgentResumeNotification
+                    job={agentResumeJob}
+                    onClick={handleAgentNotificationClick}
+                  />
+                  {/* Persistent floating nav bar for tabbed screens */}
+                  <AnimatePresence>
+                    {isTabbed && !isChatTransition && (
+                      <motion.div
+                        initial={{ y: 50, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 80, opacity: 0 }}
+                        transition={{
+                          duration: 0.35,
+                          ease: [0.22, 1, 0.36, 1],
+                        }}
+                        className="absolute bottom-6 left-6 right-6 z-40"
+                      >
+                        <BottomNav go={go} activeTab={activeTab} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </ShellStripContext.Provider>
+            </PhoneShell>
+          ) : (
+            component
+          )}
+        </>
 
         <style>{`.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{scrollbar-width:none}`}</style>
       </main>
